@@ -89,7 +89,7 @@ export default function ResumeBuilder() {
     setSections(sections.filter(section => section.id !== sectionId))
   }
 
-  const generateAISuggestion = async (sectionId: string) => {
+  const generateAISuggestion = async () => {
     // This would connect to your backend AI service
     // For now, showing a placeholder
     const suggestions = [
@@ -205,7 +205,7 @@ export default function ResumeBuilder() {
                       />
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => generateAISuggestion(section.id)}
+                          onClick={() => generateAISuggestion()}
                           className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
                         >
                           AI Suggest

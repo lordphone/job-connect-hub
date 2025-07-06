@@ -64,8 +64,7 @@ export default function Home() {
     }
   }
 
-  const TabButton = ({ tabKey, label, isActive, onClick }: {
-    tabKey: TabType
+  const TabButton = ({ label, isActive, onClick }: {
     label: string
     isActive: boolean
     onClick: () => void
@@ -92,8 +91,8 @@ export default function Home() {
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Your comprehensive platform for connecting job seekers with employers. 
-              Whether you're looking for your next career opportunity or seeking top talent, 
-              we've got you covered.
+              Whether you&apos;re looking for your next career opportunity or seeking top talent, 
+              we&apos;ve got you covered.
             </p>
             
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-12">
@@ -435,25 +434,21 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex space-x-1">
             <TabButton
-              tabKey="home"
               label="Home"
               isActive={activeTab === 'home'}
               onClick={() => setActiveTab('home')}
             />
             <TabButton
-              tabKey="jobseeker"
               label="Job Seeker Dashboard"
               isActive={activeTab === 'jobseeker'}
               onClick={() => setActiveTab('jobseeker')}
             />
             <TabButton
-              tabKey="employer"
               label="Employer Dashboard"
               isActive={activeTab === 'employer'}
               onClick={() => setActiveTab('employer')}
             />
             <TabButton
-              tabKey="chat"
               label="Chat"
               isActive={activeTab === 'chat'}
               onClick={() => setActiveTab('chat')}
