@@ -56,6 +56,10 @@ cd backend && python main.py
 
 # Terminal 2 (Frontend):
 cd frontend && npm run dev
+
+Afterwards, you can access (default):
+Frontend: http://localhost:3000 | Backend: http://localhost:8000
+
 ```
 
 ### 4. 🔄 Development Workflow
@@ -112,7 +116,7 @@ Closes #123
 2. **Address feedback** if requested
 3. **Make changes** and push new commits
 4. **PR gets approved** and merged
-5. **Task automatically moves** to "✅ Done"
+5. **Task might automatically moves** to "✅ Done" (or moved manually)
 
 ### 7. 🆘 Getting Help
 
@@ -150,34 +154,3 @@ job-connect-hub/
 │   └── env.example          # Environment template
 └── README.md               # This guide
 ```
-
-## 🚀 Advanced Setup (For Seniors)
-
-Need to set up the full development environment? Here's the complete setup:
-
-```bash
-# Backend with virtual environment
-cd backend
-python3.11 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp env.example .env
-
-# Frontend
-cd ../frontend
-npm install
-
-# Start both servers
-# Terminal 1: cd backend && python main.py
-# Terminal 2: cd frontend && npm run dev
-```
-
-**URLs:** Frontend: http://localhost:3000 | Backend: http://localhost:8000
-
----
-
-*This README focuses on GitHub Projects workflow for team development. For detailed technical documentation, refer to the code comments and API documentation at `/docs` endpoints.*
-
-**Happy coding! 🎉**
-
-If you found this project helpful, please give it a ⭐ star on GitHub!
