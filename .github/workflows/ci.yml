@@ -82,6 +82,15 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
         fi
     
+    - name: Create .env file for testing
+      run: |
+        cp backend/env.example backend/.env
+        # Override with CI-specific values
+        echo "GOOGLE_API_KEY=test_key_for_ci" >> backend/.env
+        echo "API_HOST=0.0.0.0" >> backend/.env
+        echo "API_PORT=8000" >> backend/.env
+        echo "FRONTEND_URL=http://localhost:3000" >> backend/.env
+    
     - name: Build Docker images
       run: |
         docker compose build
@@ -90,5 +99,8 @@ jobs:
       run: |
         docker compose up -d
         sleep 30
+        # Test health endpoint
         curl -f http://localhost:8000/health || exit 1
+        # Test root endpoint
+        curl -f http://localhost:8000/ || exit 1
         docker compose down 
