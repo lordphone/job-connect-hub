@@ -1,0 +1,242 @@
+# ==============================================================================
+# JOB CONNECT HUB - ROOT GITIGNORE
+# ==============================================================================
+# This file covers patterns for the entire project
+# Additional .gitignore files in subdirectories handle specific framework needs
+
+# ==============================================================================
+# OPERATING SYSTEM FILES
+# ==============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.fuse_hidden*
+.nfs*
+
+# ==============================================================================
+# IDEs AND EDITORS
+# ==============================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ==============================================================================
+# PYTHON (BACKEND)
+# ==============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.ENV/
+.env/
+
+# PyCharm
+.idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ==============================================================================
+# NODE.JS (FRONTEND)
+# ==============================================================================
+# Dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js
+/.next/
+/out/
+.next/
+out/
+
+# Build outputs
+/build
+build/
+/coverage
+coverage/
+
+# Production
+/dist
+dist/
+
+# TypeScript
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Testing
+.nyc_output
+
+# ==============================================================================
+# ENVIRONMENT AND CONFIGURATION FILES
+# ==============================================================================
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Configuration files with sensitive data
+config/local.json
+config/production.json
+*.key
+*.pem
+*.cert
+
+# ==============================================================================
+# DOCKER
+# ==============================================================================
+# Docker volumes and temp files
+.docker/
+docker-compose.override.yml
+
+# ==============================================================================
+# LOGS AND DATABASES
+# ==============================================================================
+# Log files
+*.log
+logs/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# ==============================================================================
+# TEMPORARY AND CACHE FILES
+# ==============================================================================
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# ==============================================================================
+# PROJECT SPECIFIC
+# ==============================================================================
+# AI/ML models (if any)
+*.pkl
+*.joblib
+*.h5
+*.model
+
+# Documentation builds
+docs/_build/
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+
+# ==============================================================================
+# SECURITY
+# ==============================================================================
+# Never commit these files
+*.p12
+*.pem
+*.key
+*.cert
+secrets.json
+.secrets/ 
