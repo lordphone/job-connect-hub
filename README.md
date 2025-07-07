@@ -44,7 +44,7 @@ cd backend
 python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp env.example .env
+cp .env.example .env
 
 # 3. Frontend setup
 cd ../frontend
@@ -68,7 +68,7 @@ Frontend: http://localhost:3000 | Backend: http://localhost:8000
 #### Backend Environment Variables
 Configure `backend/.env` with your API keys:
 ```env
-# Copy from backend/env.example and fill in your values
+# Copy from backend/.env.example and fill in your values
 
 # Optional: For AI chat features only (not required for basic development)
 GOOGLE_API_KEY=your_google_api_key_here
