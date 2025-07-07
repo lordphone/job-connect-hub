@@ -1,0 +1,38 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employer Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <style>
+    .navbar {
+        background-color: #ff8800;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+}
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <h1 class="navbar-brand">Employer Page</h1>
+            <div class="navbar-nav">
+                {% if request.cookies.get('access_token') %}
+                    <a href="/employer_homepage">Home</a>  
+                    <a href="/logout">Logout</a>
+                {% else %}
+                    <a href="/login_employer">Login</a>
+                    <a href="/employer">Sign Up</a>
+                    <a href="/signup">Go To Employee Page</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
