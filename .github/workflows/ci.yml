@@ -84,7 +84,7 @@ jobs:
     
     - name: Create .env file for testing
       run: |
-        cp backend/env.example backend/.env
+        cp backend/.env.example backend/.env
         # Override with CI-specific values
         echo "GOOGLE_API_KEY=test_key_for_ci" >> backend/.env
         echo "API_HOST=0.0.0.0" >> backend/.env

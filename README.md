@@ -44,11 +44,12 @@ cd backend
 python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-cp env.example .env
+cp .env.example .env
 
 # 3. Frontend setup
 cd ../frontend
 npm install
+cp .env.example .env.local
 
 # 4. Start development servers
 # Terminal 1 (Backend):
@@ -62,7 +63,34 @@ Frontend: http://localhost:3000 | Backend: http://localhost:8000
 
 ```
 
-### 4. 🔄 Development Workflow
+### 4. 🔧 Environment Variables Setup (Optional for basic development like frontend stuff)
+
+#### Backend Environment Variables
+Configure `backend/.env` with your API keys:
+```env
+# Copy from backend/.env.example and fill in your values
+
+# Optional: For AI chat features only (not required for basic development)
+GOOGLE_API_KEY=your_google_api_key_here
+
+# Required for Supabase features (resume upload, email auth)
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+#### Frontend Environment Variables
+Configure `frontend/.env.local` with public configuration:
+```env
+# Copy from frontend/.env.example and fill in your values
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_ENV=development
+```
+
+> **Note**: Environment files (`.env`, `.env.local`) are gitignored and contain sensitive information. Never commit them to the repository.
+
+### 5. 🔄 Development Workflow
 
 #### Step 1: Create Your Branch
 ```bash
@@ -90,7 +118,7 @@ git push origin feature/issue-123-task-description
 3. **Request review** from a senior team member
 4. **Move your task** to "In Review" column
 
-### 5. 📝 Pull Request Guidelines
+### 6. 📝 Pull Request Guidelines
 
 #### Good PR Description Template:
 ```markdown
@@ -110,7 +138,7 @@ Closes #123
 - ✅ Functions work as described in the task
 - ✅ Clean, readable code with comments
 
-### 6. 🔍 Code Review Process
+### 7. 🔍 Code Review Process
 
 1. **Engineer team lead will review the request** asap
 2. **Address feedback** if requested
@@ -118,11 +146,11 @@ Closes #123
 4. **PR gets approved** and merged
 5. **Task might automatically moves** to "✅ Done" (or moved manually)
 
-### 7. 🆘 Getting Help
+### 8. 🆘 Getting Help
 
 - **Stuck on a anything?** Dont be afraid to text in the wechat group chat! or dm me (lordphone) personally
 
-### 8. 📚 Learning Resources
+### 9. 📚 Learning Resources
 
 #### For Frontend (React/Next.js):
 - [React Documentation](https://react.dev/)
@@ -135,7 +163,9 @@ Closes #123
 
 ## 🔧 Optional: AI Features Setup
 
-API keys are optional for basic development. For AI chat features:
+**Google API keys are optional for basic development.** The application will work without them, but AI chat features will be disabled. 
+
+For AI chat features:
 1. Get a [Google AI Studio API key](https://makersuite.google.com/app/apikey)
 2. Add to `backend/.env`: `GOOGLE_API_KEY=your_key_here`
 
@@ -147,10 +177,13 @@ job-connect-hub/
 │   ├── src/app/             # App router pages
 │   │   ├── page.tsx         # Main tabbed interface
 │   │   └── resume-builder/  # Resume builder page
+│   ├── .env.example         # Environment template
+│   ├── .env.local          # Local environment variables (gitignored)
 │   └── package.json
 ├── backend/                  # FastAPI backend
 │   ├── main.py              # API endpoints
 │   ├── requirements.txt     # Python dependencies
-│   └── env.example          # Environment template
+│   ├── env.example          # Environment template
+│   └── .env                 # Environment variables (gitignored)
 └── README.md               # This guide
 ```
