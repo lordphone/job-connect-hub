@@ -14,7 +14,7 @@ Welcome to our engineering team! This guide will help you get started contributi
 
 ### 1. 📋 Finding Your First Task
 
-1. **Go to the [Projects Tab](../../projects) or [Issues Tab](../../issues)in our GitHub repository**
+1. **Go to the [Projects Tab](../../projects) or [Issues Tab](../../issues) in our GitHub repository**
 2. **Look for the "Job Connect Hub Development" board**
 3. **Find a task in the "🆕 To Do" column with relevent labels**
 
