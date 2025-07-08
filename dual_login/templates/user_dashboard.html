@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-container">
+    <h2>Welcome to Your Dashboard</h2>
+    
+    <div class="form-section">
+        <h3>Resume Analysis</h3>
+        <form method="POST" action="/analyze-resume">
+            <div class="form-group">
+                <label for="resume">Paste your resume here:</label>
+                <textarea 
+                    id="resume" 
+                    name="resume" 
+                    rows="12" 
+                    placeholder="Paste your resume content here..."
+                    required
+                ></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="job_description">Paste the job description here:</label>
+                <textarea 
+                    id="job_description" 
+                    name="job_description" 
+                    rows="12" 
+                    placeholder="Paste the job description here..."
+                    required
+                ></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                <span id="btnText">Analyze Resume</span>
+                <span id="loadingText" style="display: none;">Analyzing...</span>
+            </button>
+        </form>
+    </div>
+    
+    {% if analysis_result %}
+    <div class="analysis-section">
+        <h3>Analysis Results</h3>
+        <div class="result-box">
+            {{ analysis_result | safe }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function() {
+    const btn = document.getElementById('analyzeBtn');
+    const btnText = document.getElementById('btnText');
+    const loadingText = document.getElementById('loadingText');
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    loadingText.style.display = 'inline';
+    
+    // Re-enable after a delay (in case of errors)
+    setTimeout(() => {
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        loadingText.style.display = 'none';
+    }, 10000);
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,63 @@
+JOHN DOE
+Software Developer
+john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe
+
+SUMMARY
+Experienced software developer with 3 years of experience in web development and database management. Passionate about creating efficient and scalable applications.
+
+EXPERIENCE
+Software Developer | TechCorp Inc. | 2021-2024
+- Developed web applications using HTML, CSS, and JavaScript
+- Worked with MySQL databases for data storage and retrieval
+- Collaborated with team members using Git for version control
+- Participated in weekly team meetings and code reviews
+
+Junior Developer | StartupXYZ | 2020-2021
+- Assisted in frontend development using basic web technologies
+- Helped maintain existing codebase and fix bugs
+- Learned about agile development methodologies
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Technology | 2020
+
+SKILLS
+- Programming: JavaScript, HTML, CSS
+- Databases: MySQL
+- Tools: Git, VS Code
+- Methodologies: Basic understanding of agile practices
+
+
+
+Senior Python Developer
+We are looking for an experienced Python developer to join our
+growing team. The ideal candidate will have strong experience
+with modern web frameworks and cloud technologies.
+Requirements:
+- 5+ years of experience in software development
+- Strong proficiency in Python programming language
+- Experience with web frameworks such as Django or Flask
+- Knowledge of PostgreSQL or MySQL databases
+- Experience with cloud platforms (AWS, Azure, or GCP)
+- Familiarity with Docker and containerization
+- Experience with Git and version control systems
+- Understanding of agile development methodologies
+- Experience with CI/CD pipelines
+- Knowledge of RESTful APIs and microservices architecture
+Responsibilities:
+- Develop and maintain scalable web applications using Python
+- Design and implement database schemas and queries
+- Work with cloud services for deployment and scaling
+- Collaborate with cross-functional teams using agile
+methodologies
+- Write clean, maintainable code with proper documentation
+- Participate in code reviews and technical discussions
+- Implement automated testing and CI/CD processes
+Nice to have:
+- Experience with FastAPI framework
+- Knowledge of Kubernetes orchestration
+- Experience with machine learning libraries
+- Understanding of DevOps practices
+- Experience with monitoring and logging tools
+We offer competitive salary, health benefits, and opportunities
+for professional growth in a collaborative environment.
