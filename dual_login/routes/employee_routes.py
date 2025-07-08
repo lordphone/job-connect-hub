@@ -8,7 +8,7 @@ from ..forms import as_form
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory="./employee_repo/templates")
+templates = Jinja2Templates(directory="./dual_login/templates")
 
 @router.get("/", response_class=HTMLResponse)
 async def read_employees(request: Request):
