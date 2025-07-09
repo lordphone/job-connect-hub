@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import Response
 
 router = APIRouter()
-templates = Jinja2Templates(directory="./employee_repo/templates")
+templates = Jinja2Templates(directory="./dual_login/templates")
 
 @router.get("/signup", response_class=HTMLResponse)
 async def signup_form(request: Request):

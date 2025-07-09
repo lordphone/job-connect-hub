@@ -8,10 +8,10 @@ app = FastAPI()
 
 
 # Mount the static files directory
-app.mount("/static", StaticFiles(directory="./employee_repo/static"), name="static")
+app.mount("/static", StaticFiles(directory="./dual_login/static"), name="static")
 
 # Set up templates
-templates = Jinja2Templates(directory="./employee_repo/templates")
+templates = Jinja2Templates(directory="./dual_login/templates")
 
 # Add middleware
 app.middleware("http")(auth_middleware)
