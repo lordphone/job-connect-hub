@@ -4,23 +4,33 @@
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 + TypeScript + Tailwind CSS
+- **Frontend**: Next.js 14 + TypeScript + Tailwind CSS + Supabase
 - **Backend**: FastAPI (Python 3.11)
+- **Database & Auth**: Supabase (PostgreSQL + Authentication)
 - **Tools**: GitHub Projects, Issues, Pull Requests
 
 ## Our Architecture in a Nutshell
 
 To keep things simple, here's how our project is organized:
 
-- **The Frontend (Next.js & Supabase) handles all user-related tasks:**
-  - User signup, login, and password management.
-  - Storing user data securely in Supabase.
-  - It's the part of the app that users see and interact with.
+- **Frontend (Next.js) connects directly to Supabase for all data operations:**
+  - User signup, login, and password management
+  - User profiles and account settings
+  - **Resume uploads and storage** (files stored in Supabase Storage)
+  - **Job postings** (employers create/edit jobs directly in Supabase)
+  - **Job applications** (job seekers apply directly through Supabase)
+  - User sessions and authentication tokens
+  - **All CRUD operations** (Create, Read, Update, Delete)
 
-- **The Backend (FastAPI) handles all AI and heavy-lifting tasks:**
-  - All communication with Large Language Models (LLMs) for resume analysis.
-  - Any future AI features or complex data processing.
-  - **Important:** The backend is the only place we store secret API keys (like for Google AI). This keeps them safe.
+- **Frontend connects to FastAPI only for AI processing:**
+  - AI analysis of uploaded resumes
+  - AI-powered job matching recommendations  
+  - Career chat assistance with LLMs
+
+- **FastAPI (Backend) handles AI processing only:**
+  - Receives data from frontend, processes with AI, returns results
+  - No data storage - just AI computation
+  - Verifies user tokens from Supabase for security 
 
 ## Quick Start
 
@@ -32,7 +42,7 @@ To keep things simple, here's how our project is organized:
 ### Installation
 ```bash
 # 1. Clone the repo
-git clone https://github.com/yourusername/job-connect-hub.git
+git clone https://github.com/lordphone/job-connect-hub.git
 cd job-connect-hub
 
 # 2. Backend setup
@@ -54,34 +64,38 @@ cd backend && python main.py
 # Terminal 2 (Frontend):
 cd frontend && npm run dev
 
-Afterwards, you can access (default):
+Afterwards, you can access our webapp at:
 Frontend: http://localhost:3000 | Backend: http://localhost:8000
 
 ```
 
 ### Environment Variables
 
-#### Backend Environment Variables
-Configure `backend/.env` with your API keys:
+#### Frontend Environment Variables (Required for authentication)
+Create and configure `frontend/.env.local` with Supabase connection:
+```env
+# Copy from frontend/.env.example and fill in your values
+
+# Required: Supabase connection for user authentication & database
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Required: FastAPI connection for AI features  
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_ENV=development
+```
+
+#### Backend Environment Variables (Optional for current development)
+Create and configure `backend/.env` with your API keys:
 ```env
 # Copy from backend/.env.example and fill in your values
 
-# Optional for now but required for Supabase features (resume upload, email auth)
+# Required: For verifying user tokens from Supabase
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-# Optional: For advanced features only (not required for basic development)
+# Optional: For future real AI features (not needed yet - endpoints return mock data)
 GOOGLE_API_KEY=your_google_api_key_here
-```
-
-#### Frontend Environment Variables
-Configure `frontend/.env.local` with public configuration:
-```env
-# Copy from frontend/.env.example and fill in your values
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_ENV=development
 ```
 
 > **Note**: Environment files (`.env`, `.env.local`) are gitignored and contain sensitive information. Never commit them to the repository.
@@ -94,40 +108,73 @@ In this project, we use a modern authentication strategy where our **Next.js fro
 
 Here is the standard authentication flow:
 
-1.  **Frontend Handles Auth:** The user signs up or logs in through the UI on our Next.js application. The frontend uses the official Supabase client library (`@supabase/supabase-js`) to manage this process.
-2.  **Supabase Issues a Token:** Upon successful login, Supabase sends a JWT (JSON Web Token) back to the frontend. This token is stored securely in the browser.
-3.  **Frontend Calls the Backend:** When the frontend needs to make a request to our FastAPI backend (e.g., to fetch user-specific data), it includes this JWT in the `Authorization` header.
-    - **Header Format:** `Authorization: Bearer <the_jwt_token_from_supabase>`
-4.  **Backend Verifies the Token:** The FastAPI backend receives the request, extracts the token, and uses Supabase's keys to verify that the token is valid and not tampered with. If valid, it processes the request.
+1. **Frontend Handles Auth:** The user signs up or logs in through the UI on our Next.js application. The frontend uses the official Supabase client library (`@supabase/supabase-js`) to manage this process.
+2. **Supabase Issues a Token:** Upon successful login, Supabase sends a JWT (JSON Web Token) back to the frontend. This token is stored securely in the browser.
+3. **Frontend Calls the Backend:** When the frontend needs AI features, it includes this JWT in the `Authorization` header when calling FastAPI endpoints.
+   - **Header Format:** `Authorization: Bearer <the_jwt_token_from_supabase>`
+4. **Backend Verifies the Token:** The FastAPI backend verifies the token with Supabase, then returns structured mock data (will be real AI responses later).
 
 This approach is secure, efficient, and leverages the best features of both Supabase and FastAPI.
 
-### Live API Docs for Backend Endpoints
+### How to work with mock API data and parallel development
 
-While auth is handled by Supabase, our backend has other endpoints. For a full, interactive list of what's available:
+**Scenario**: You're a backend developer working on a new AI resume analysis feature. The frontend team hasn't built the upload UI yet, but you need to develop and test your API endpoint.
 
-**Once the backend is running, go to:**
-👉 **[http://localhost:8000/docs](http://localhost:8000/docs)**
+#### Example: Building a Resume Analysis API
 
-### Example: Accessing a Protected Backend Route
+**Step 1: Create your endpoint with mock data**
+```python
+# In backend/main.py
+@app.post("/api/analyze-resume")
+async def analyze_resume(file: UploadFile = File(...)):
+    # For now, return structured mock data instead of calling real AI (this will be replaced by the aieditor.dev functions)
+    mock_analysis = {
+        "skills_detected": ["Python", "JavaScript", "React", "FastAPI"],
+        "experience_level": "Mid-level (3-5 years)",
+        "suggested_improvements": [
+            "Add more specific project outcomes",
+            "Include relevant certifications",
+            "Quantify your achievements with numbers"
+        ],
+        "match_score": 85,
+        "strengths": ["Strong technical skills", "Diverse project experience"]
+    }
+    return {"status": "success", "analysis": mock_analysis}
+```
 
-Here’s how you would access an endpoint that requires a user to be logged in.
+**Step 2: Test independently with curl**
+```bash
+# Test your endpoint directly without frontend
+curl -X POST "http://localhost:8000/api/analyze-resume" \
+     -H "Authorization: Bearer fake_token_for_testing" \
+     -F "file=@sample_resume.pdf"
+```
 
-#### Get Current User Info
-- **Endpoint:** `GET /users/me`
-- **Authentication:** **Required**. You must provide the Supabase JWT in the `Authorization` header.
-- **Purpose:** Fetches information about the currently logged-in user from our database. The backend uses the ID from the verified JWT to look up the user.
-- **Success Response (`200 OK`):**
-  ```json
-  {
-    "email": "user@example.com",
-    "role": "Job Seeker"
-  }
-  ```
-- **Error Response (`401 Unauthorized`):** If the token is missing, invalid, or expired.
-  ```json
-  { "detail": "Not authenticated" }
-  ```
+**Step 3: Use a tool like Postman**
+- Create a POST request to `http://localhost:8000/api/analyze-resume`
+- Add Authorization header: `Bearer fake_token_for_testing`
+- In Body tab, select "form-data" and add a file field named "file"
+- Upload any PDF file to test
+
+**Step 4: Validate your mock data structure**
+```python
+# Ensure your mock data matches what frontend expects
+expected_response = {
+    "status": "success",
+    "analysis": {
+        "skills_detected": ["str", "str", "..."],
+        "experience_level": "str",
+        "suggested_improvements": ["str", "str", "..."],
+        "match_score": "int (0-100)",
+        "strengths": ["str", "str", "..."]
+    }
+}
+```
+
+**Benefits of this approach:**
+- Backend development can proceed independently
+- API contracts are defined early
+- Frontend team knows exactly what data structure to expect
 
 ## Development Guide
 
@@ -193,6 +240,28 @@ Closes #123
 - Functions work as described in the task
 - Clean, readable code with comments
 
+### CI/CD Integration
+
+After submitting your Pull Request, it must pass all Continuous Integration (CI) tests before it can be merged.
+
+#### Automated Checks:
+- **Code Quality**: Linting and formatting checks
+- **Type Safety**: TypeScript compilation (frontend)
+- **Build Tests**: Ensure project builds successfully
+- **Unit Tests**: Automated test suite execution
+
+#### If CI Fails:
+1. **Check the "Checks" tab** in your PR for detailed error messages
+2. **Fix the issues** in your local branch
+3. **Push the fixes** - CI will automatically re-run
+4. **Don't merge** until all checks pass ✅
+
+#### Common CI Issues:
+- **Linting errors**: Run `npm run lint` (frontend) or check Python formatting
+- **TypeScript errors**: Fix type issues before pushing
+- **Build failures**: Ensure all imports and dependencies are correct
+- **Test failures**: Make sure your changes don't break existing functionality
+
 ### Code Review Process
 
 1. **Engineer team lead will review the request** asap
@@ -222,15 +291,15 @@ job-connect-hub/
 
 ## Getting Help
 
-- **Stuck on anything?** Don't be afraid to text in the wechat group chat! or dm me (lordphone) personally
+**Stuck on anything?** Don't be afraid to text in the wechat group chat! or dm me (lordphone) personally
 
 ## Learning Resources
 
-#### For Frontend (React/Next.js):
+### Frontend (React/Next.js)
 - [React Documentation](https://react.dev/)
 - [Next.js Learn Course](https://nextjs.org/learn)
 - [Tailwind CSS Docs](https://tailwindcss.com/)
 
-#### For Backend (Python/FastAPI):
+### Backend (Python/FastAPI)
 - [FastAPI Tutorial](https://fastapi.tiangolo.com/tutorial/)
 - [Python Crash Course](https://www.python.org/about/gettingstarted/)
