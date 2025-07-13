@@ -7,28 +7,6 @@ interface ChatMessage {
   content: string
 }
 
-interface SignupRequest {
-  email: string
-  password: string
-}
-
-interface SignupResponse {
-  success: boolean
-  message: string
-  user_id?: string
-}
-
-interface LoginRequest {
-  email: string
-  password: string
-}
-
-interface LoginResponse {
-  success: boolean
-  message: string
-  access_token?: string
-}
-
 type TabType = 'home' | 'jobseeker' | 'employer' | 'chat'
 
 export default function Home() {
@@ -44,7 +22,6 @@ export default function Home() {
   const [authMessage, setAuthMessage] = useState('')
   const [isAuthLoading, setIsAuthLoading] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userToken, setUserToken] = useState<string | null>(null)
   const [userType, setUserType] = useState<string | null>(null)
 
   // Check for existing token on component mount
@@ -53,7 +30,6 @@ export default function Home() {
     const storedUserType = localStorage.getItem('userType')
     if (token && storedUserType) {
       setIsLoggedIn(true)
-      setUserToken(token)
       setUserType(storedUserType)
     }
   }, [])
@@ -134,7 +110,7 @@ export default function Home() {
         })
       })
 
-      const data: SignupResponse = await response.json()
+      const data = await response.json()
       
       if (data.success) {
         setAuthMessage('Signup successful! Please log in.')
@@ -144,7 +120,7 @@ export default function Home() {
       } else {
         setAuthMessage(data.message)
       }
-    } catch (error) {
+    } catch {
       setAuthMessage('Error connecting to server. Please try again.')
     } finally {
       setIsAuthLoading(false)
@@ -175,14 +151,13 @@ export default function Home() {
         })
       })
 
-      const data: LoginResponse = await response.json()
+      const data = await response.json()
       
       if (data.success) {
         setAuthMessage('Login successful!')
         setShowLoginModal(false)
         setLoginData({ email: '', password: '' })
         setIsLoggedIn(true)
-        setUserToken(data.access_token || null)
         // Store token and user type in localStorage for persistence
         if (data.access_token) {
           localStorage.setItem('userToken', data.access_token)
@@ -193,7 +168,7 @@ export default function Home() {
       } else {
         setAuthMessage(data.message)
       }
-    } catch (error) {
+    } catch {
       setAuthMessage('Error connecting to server. Please try again.')
     } finally {
       setIsAuthLoading(false)
@@ -202,7 +177,6 @@ export default function Home() {
 
   const handleLogout = () => {
     setIsLoggedIn(false)
-    setUserToken(null)
     setUserType(null)
     localStorage.removeItem('userToken')
     localStorage.removeItem('userType')

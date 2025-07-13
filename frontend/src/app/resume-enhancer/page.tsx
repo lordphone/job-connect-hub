@@ -3,13 +3,19 @@
 import { useState, useEffect, useRef } from 'react'
 
 // Import AiEditor types and styles with error handling
-let AiEditor: any = null
-try {
-  const aieditorModule = require('aieditor')
-  AiEditor = aieditorModule.AiEditor || aieditorModule.default
-} catch (error) {
-  console.warn('AiEditor not available:', error)
+interface AiEditorInstance {
+  getContent?: () => string
+  getHtml?: () => string
+  getText?: () => string
+  getMarkdown?: () => string
+  getContentHtml?: () => string
+  getContentText?: () => string
+  destroy?: () => void
 }
+
+// Use dynamic import for AiEditor
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let AiEditor: any = null
 
 import 'aieditor/dist/style.css'
 
@@ -38,32 +44,42 @@ export default function ResumeEnhancer() {
   const [showResults, setShowResults] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
-  const aiEditorRef = useRef<any>(null)
+  const aiEditorRef = useRef<AiEditorInstance | null>(null)
 
   useEffect(() => {
-    if (editorRef.current && !aiEditorRef.current && AiEditor) {
-      try {
-        // Initialize AiEditor
-        aiEditorRef.current = new AiEditor({
-          element: editorRef.current,
-          placeholder: "Paste your resume here...",
-          content: '',
-          ai: {
-            models: {
-              spark: {
-                appId: "***",
-                apiKey: "***",
-                apiSecret: "***",
+    const initAiEditor = async () => {
+      if (editorRef.current && !aiEditorRef.current) {
+        try {
+          // Dynamic import of AiEditor
+          const aieditorModule = await import('aieditor')
+          AiEditor = aieditorModule.AiEditor
+          
+          if (AiEditor) {
+            // Initialize AiEditor
+            aiEditorRef.current = new AiEditor({
+              element: editorRef.current,
+              placeholder: "Paste your resume here...",
+              content: '',
+              ai: {
+                models: {
+                  spark: {
+                    appId: "***",
+                    apiKey: "***",
+                    apiSecret: "***",
+                  }
+                }
               }
-            }
+            })
+            setEditorError(null)
           }
-        })
-        setEditorError(null)
-      } catch (error) {
-        console.error('AiEditor initialization error:', error)
-        setEditorError('Failed to initialize editor. Using fallback textarea.')
+        } catch (error) {
+          console.error('AiEditor initialization error:', error)
+          setEditorError('Failed to initialize editor. Using fallback textarea.')
+        }
       }
     }
+
+    initAiEditor()
 
     // Cleanup function
     return () => {
@@ -198,7 +214,7 @@ export default function ResumeEnhancer() {
     const weakVerbs = ['did', 'worked on', 'helped with', 'was involved in', 'participated in']
     
     lines.forEach(line => {
-      let originalLine = line.trim()
+      const originalLine = line.trim()
       if (!originalLine) {
         revisedLines.push(line)
         return
