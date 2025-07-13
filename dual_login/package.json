@@ -1,0 +1,20 @@
+{
+    "name": "employee-management-system",
+    "version": "1.0.0",
+    "description": "Employee Management System with Resume Analysis",
+    "type": "module",
+    "scripts": {
+      "build": "esbuild static/js/app.ts --bundle --outfile=static/js/app.bundle.js --format=esm --target=es2020",
+      "dev": "esbuild static/js/app.ts --bundle --outfile=static/js/app.bundle.js --format=esm --target=es2020 --watch",
+      "type-check": "tsc --noEmit",
+      "clean": "rm -f static/js/app.bundle.js"
+    },
+    "dependencies": {
+      "aieditor": "^1.4.0"
+    },
+    "devDependencies": {
+      "esbuild": "^0.19.0",
+      "typescript": "^5.0.0",
+      "@types/node": "^20.0.0"
+    }
+  }

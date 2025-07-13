@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -14,6 +14,25 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showSignupModal, setShowSignupModal] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [signupData, setSignupData] = useState({ email: '', password: '', confirmPassword: '' })
+  const [signupUserType, setSignupUserType] = useState<string | null>(null)
+  const [loginData, setLoginData] = useState({ email: '', password: '' })
+  const [authMessage, setAuthMessage] = useState('')
+  const [isAuthLoading, setIsAuthLoading] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userType, setUserType] = useState<string | null>(null)
+
+  // Check for existing token on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('userToken')
+    const storedUserType = localStorage.getItem('userType')
+    if (token && storedUserType) {
+      setIsLoggedIn(true)
+      setUserType(storedUserType)
+    }
+  }, [])
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,6 +81,106 @@ export default function Home() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (signupData.password !== signupData.confirmPassword) {
+      setAuthMessage('Passwords do not match')
+      return
+    }
+    if (!signupUserType) {
+      setAuthMessage('Please select a user type')
+      return
+    }
+    
+    setIsAuthLoading(true)
+    setAuthMessage('')
+    
+    try {
+      const response = await fetch('http://localhost:8000/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: signupData.email,
+          password: signupData.password,
+          user_type: signupUserType
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setAuthMessage('Signup successful! Please log in.')
+        setShowSignupModal(false)
+        setSignupData({ email: '', password: '', confirmPassword: '' })
+        setSignupUserType(null)
+      } else {
+        setAuthMessage(data.message)
+      }
+    } catch {
+      setAuthMessage('Error connecting to server. Please try again.')
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!userType) {
+      setAuthMessage('Please select a user type')
+      return
+    }
+    
+    setIsAuthLoading(true)
+    setAuthMessage('')
+    
+    try {
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: loginData.email,
+          password: loginData.password,
+          user_type: userType
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setAuthMessage('Login successful!')
+        setShowLoginModal(false)
+        setLoginData({ email: '', password: '' })
+        setIsLoggedIn(true)
+        // Store token and user type in localStorage for persistence
+        if (data.access_token) {
+          localStorage.setItem('userToken', data.access_token)
+          localStorage.setItem('userType', userType || '')
+        }
+        // Redirect to the appropriate dashboard
+        setActiveTab(userType as TabType)
+      } else {
+        setAuthMessage(data.message)
+      }
+    } catch {
+      setAuthMessage('Error connecting to server. Please try again.')
+    } finally {
+      setIsAuthLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    setUserType(null)
+    localStorage.removeItem('userToken')
+    localStorage.removeItem('userType')
+    setAuthMessage('Logged out successfully')
   }
 
   const TabButton = ({ label, isActive, onClick }: {
@@ -144,6 +263,22 @@ export default function Home() {
         )
 
       case 'jobseeker':
+        // Redirect to home if not logged in or not a jobseeker
+        if (!isLoggedIn || userType !== 'jobseeker') {
+          return (
+            <div className="py-8 text-center">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Access Denied</h2>
+              <p className="text-gray-600 mb-6">Please log in as a job seeker to access this dashboard.</p>
+              <button
+                onClick={() => setActiveTab('home')}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+              >
+                Go to Home
+              </button>
+            </div>
+          )
+        }
+        
         return (
           <div className="py-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-8">Job Seeker Dashboard</h2>
@@ -178,13 +313,16 @@ export default function Home() {
 
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  Interview Prep
+                  AI Resume Enhancer
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Practice with mock interviews and get tips to ace your next interview.
+                  Revise and edit your resume with AI-powered suggestions to make it stand out to employers.
                 </p>
-                <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors">
-                  Start Practice
+                <button 
+                  onClick={() => window.open('/resume-enhancer', '_blank')}
+                  className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors"
+                >
+                  Improve Your Resume
                 </button>
               </div>
 
@@ -228,6 +366,22 @@ export default function Home() {
         )
 
       case 'employer':
+        // Redirect to home if not logged in or not an employer
+        if (!isLoggedIn || userType !== 'employer') {
+          return (
+            <div className="py-8 text-center">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Access Denied</h2>
+              <p className="text-gray-600 mb-6">Please log in as an employer to access this dashboard.</p>
+              <button
+                onClick={() => setActiveTab('home')}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+              >
+                Go to Home
+              </button>
+            </div>
+          )
+        }
+        
         return (
           <div className="py-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-8">Employer Dashboard</h2>
@@ -422,9 +576,32 @@ export default function Home() {
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-800">Job Connect Hub</h1>
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-              Login
-            </button>
+            {isLoggedIn ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-gray-600">Welcome back!</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => setShowSignupModal(true)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors"
+                >
+                  Sign Up
+                </button>
+                <button 
+                  onClick={() => setShowLoginModal(true)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Login
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -438,16 +615,20 @@ export default function Home() {
               isActive={activeTab === 'home'}
               onClick={() => setActiveTab('home')}
             />
-            <TabButton
-              label="Job Seeker Dashboard"
-              isActive={activeTab === 'jobseeker'}
-              onClick={() => setActiveTab('jobseeker')}
-            />
-            <TabButton
-              label="Employer Dashboard"
-              isActive={activeTab === 'employer'}
-              onClick={() => setActiveTab('employer')}
-            />
+            {isLoggedIn && userType === 'jobseeker' && (
+              <TabButton
+                label="Job Seeker Dashboard"
+                isActive={activeTab === 'jobseeker'}
+                onClick={() => setActiveTab('jobseeker')}
+              />
+            )}
+            {isLoggedIn && userType === 'employer' && (
+              <TabButton
+                label="Employer Dashboard"
+                isActive={activeTab === 'employer'}
+                onClick={() => setActiveTab('employer')}
+              />
+            )}
             <TabButton
               label="Chat"
               isActive={activeTab === 'chat'}
@@ -461,6 +642,247 @@ export default function Home() {
       <main className="container mx-auto px-4 py-8">
         {renderTabContent()}
       </main>
+
+      {/* Signup Modal */}
+      {showSignupModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Sign Up</h3>
+              <button
+                onClick={() => {
+                  setShowSignupModal(false)
+                  setSignupData({ email: '', password: '', confirmPassword: '' })
+                  setSignupUserType(null)
+                  setAuthMessage('')
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleSignup}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={signupData.email}
+                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={signupData.password}
+                  onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  value={signupData.confirmPassword}
+                  onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sign up as
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="signupUserType"
+                      value="jobseeker"
+                      checked={signupUserType === 'jobseeker'}
+                      onChange={(e) => setSignupUserType(e.target.value)}
+                      className="mr-2"
+                      required
+                    />
+                    <span className="text-sm text-gray-700">Job Seeker</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="signupUserType"
+                      value="employer"
+                      checked={signupUserType === 'employer'}
+                      onChange={(e) => setSignupUserType(e.target.value)}
+                      className="mr-2"
+                      required
+                    />
+                    <span className="text-sm text-gray-700">Employer</span>
+                  </label>
+                </div>
+              </div>
+              
+              {authMessage && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${
+                  authMessage.includes('successful') 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {authMessage}
+                </div>
+              )}
+              
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  className="flex-1 bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isAuthLoading ? 'Signing up...' : 'Sign Up'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSignupModal(false)
+                    setSignupData({ email: '', password: '', confirmPassword: '' })
+                    setSignupUserType(null)
+                    setAuthMessage('')
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Login</h3>
+              <button
+                onClick={() => {
+                  setShowLoginModal(false)
+                  setLoginData({ email: '', password: '' })
+                  setUserType(null)
+                  setAuthMessage('')
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleLogin}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Login as
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="userType"
+                      value="jobseeker"
+                      checked={userType === 'jobseeker'}
+                      onChange={(e) => setUserType(e.target.value)}
+                      className="mr-2"
+                      required
+                    />
+                    <span className="text-sm text-gray-700">Job Seeker</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="userType"
+                      value="employer"
+                      checked={userType === 'employer'}
+                      onChange={(e) => setUserType(e.target.value)}
+                      className="mr-2"
+                      required
+                    />
+                    <span className="text-sm text-gray-700">Employer</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              {authMessage && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${
+                  authMessage.includes('successful') 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {authMessage}
+                </div>
+              )}
+              
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  disabled={isAuthLoading}
+                  className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isAuthLoading ? 'Logging in...' : 'Login'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLoginModal(false)
+                    setLoginData({ email: '', password: '' })
+                    setUserType(null)
+                    setAuthMessage('')
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
