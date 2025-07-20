@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 import uvicorn
-from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
@@ -32,15 +31,6 @@ gemini_client = None
 if os.getenv("GOOGLE_API_KEY"):
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
     gemini_client = genai.GenerativeModel('gemini-2.5-flash')
-
-# Initialize Supabase client (optional - only needed if backend requires Supabase access)
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-else:
-    supabase = None
 
 # Pydantic models
 class ChatRequest(BaseModel):
@@ -129,21 +119,5 @@ async def get_available_models():
             "models": ["gemini-2.5-flash", "gemini-pro", "gemini-pro-vision"],
             "error": str(e)
         }
-
-
-# Authentication Routes
-@app.get("/auth/test")
-async def test_auth():
-    """Test endpoint to verify authentication routes are accessible"""
-    return {
-        "message": "Auth routes are working", 
-        "jobseeker_supabase_configured": supabase is not None,
-        "employer_supabase_configured": supabase_employer is not None
-    }
-
-
-
-
-
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

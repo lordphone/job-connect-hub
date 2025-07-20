@@ -124,6 +124,12 @@ export default function Home() {
     setAuthMessage('')
     
     try {
+      console.log('Attempting signup with:', {
+        email: signupData.email,
+        user_type: signupUserType,
+        password_length: signupData.password.length
+      })
+
       const { data, error } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
@@ -134,7 +140,10 @@ export default function Home() {
         }
       })
 
+      console.log('Supabase signup response:', { data, error })
+
       if (error) {
+        console.error('Supabase signup error:', error)
         setAuthMessage(error.message)
       } else if (data.user) {
         setAuthMessage('Signup successful! Please check your email to verify your account.')
@@ -143,6 +152,7 @@ export default function Home() {
         setSignupUserType(null)
       }
     } catch (error) {
+      console.error('Unexpected signup error:', error)
       setAuthMessage('An unexpected error occurred. Please try again.')
     } finally {
       setIsAuthLoading(false)
