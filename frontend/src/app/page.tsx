@@ -198,6 +198,7 @@ export default function Home() {
         setActiveTab(userType as TabType)
       }
     } catch (error) {
+      console.error('Unexpected login error:', error)
       setAuthMessage('An unexpected error occurred. Please try again.')
     } finally {
       setIsAuthLoading(false)
@@ -210,6 +211,7 @@ export default function Home() {
       setAuthMessage('Logged out successfully')
       // State will be updated by the onAuthStateChange listener
     } catch (error) {
+      console.error('Logout error:', error)
       setAuthMessage('Error logging out. Please try again.')
     }
   }
