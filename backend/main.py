@@ -1,13 +1,11 @@
-from fastapi import FastAPI, HTTPException, Form, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 import uvicorn
-import jwt
 from supabase import create_client, Client
 
 # Load environment variables
@@ -35,22 +33,14 @@ if os.getenv("GOOGLE_API_KEY"):
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
     gemini_client = genai.GenerativeModel('gemini-2.5-flash')
 
-# Initialize Supabase client
+# Initialize Supabase client (optional - only needed if backend requires Supabase access)
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
-SUPABASE_URL_EMPLOYER = os.getenv('SUPABASE_URL_EMPLOYER')
-SUPABASE_KEY_EMPLOYER = os.getenv('SUPABASE_KEY_EMPLOYER')
 
 if SUPABASE_URL and SUPABASE_KEY:
     supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 else:
     supabase = None
-
-if SUPABASE_URL_EMPLOYER and SUPABASE_KEY_EMPLOYER:
-    supabase_employer: Client = create_client(SUPABASE_URL_EMPLOYER, SUPABASE_KEY_EMPLOYER)
-else:
-    supabase_employer = None
 
 # Pydantic models
 class ChatRequest(BaseModel):
@@ -69,28 +59,7 @@ class HealthResponse(BaseModel):
     message: str
 
 
-class SignupRequest(BaseModel):
-    email: EmailStr
-    password: str
-    user_type: str  # "jobseeker" or "employer"
 
-
-class SignupResponse(BaseModel):
-    success: bool
-    message: str
-    user_id: Optional[str] = None
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-    user_type: str  # "jobseeker" or "employer"
-
-
-class LoginResponse(BaseModel):
-    success: bool
-    message: str
-    access_token: Optional[str] = None
 
 
 # Routes
@@ -173,102 +142,7 @@ async def test_auth():
     }
 
 
-@app.post("/auth/signup", response_model=SignupResponse)
-async def signup(request: SignupRequest):
-    """Sign up endpoint for job seekers and employers"""
-    
-    # Determine which Supabase connection to use based on user type
-    if request.user_type == "employer":
-        if not supabase_employer:
-            return SignupResponse(
-                success=False,
-                message="Employer Supabase not configured. Please set SUPABASE_URL_EMPLOYER and SUPABASE_KEY_EMPLOYER environment variables."
-            )
-        supabase_client = supabase_employer
-    elif request.user_type == "jobseeker":
-        if not supabase:
-            return SignupResponse(
-                success=False,
-                message="Job Seeker Supabase not configured. Please set SUPABASE_URL and SUPABASE_KEY environment variables."
-            )
-        supabase_client = supabase
-    else:
-        return SignupResponse(
-            success=False,
-            message="Invalid user type. Must be 'jobseeker' or 'employer'"
-        )
-    
-    try:
-        auth_response = supabase_client.auth.sign_up({
-            'email': request.email,
-            'password': request.password
-        })
-        
-        if auth_response.user is None:
-            return SignupResponse(
-                success=False,
-                message="Signup failed"
-            )
-        
-        return SignupResponse(
-            success=True,
-            message=f"{request.user_type.title()} registered successfully",
-            user_id=auth_response.user.id
-        )
-    except Exception as e:
-        return SignupResponse(
-            success=False,
-            message=f"Signup error: {str(e)}"
-        )
 
-
-@app.post("/auth/login", response_model=LoginResponse)
-async def login(request: LoginRequest):
-    """Login endpoint for job seekers and employers"""
-    
-    # Determine which Supabase connection to use based on user type
-    if request.user_type == "employer":
-        if not supabase_employer:
-            return LoginResponse(
-                success=False,
-                message="Employer Supabase not configured. Please set SUPABASE_URL_EMPLOYER and SUPABASE_KEY_EMPLOYER environment variables."
-            )
-        supabase_client = supabase_employer
-    elif request.user_type == "jobseeker":
-        if not supabase:
-            return LoginResponse(
-                success=False,
-                message="Job Seeker Supabase not configured. Please set SUPABASE_URL and SUPABASE_KEY environment variables."
-            )
-        supabase_client = supabase
-    else:
-        return LoginResponse(
-            success=False,
-            message="Invalid user type. Must be 'jobseeker' or 'employer'"
-        )
-    
-    try:
-        auth_response = supabase_client.auth.sign_in_with_password({
-            'email': request.email,
-            'password': request.password
-        })
-        
-        if auth_response.user is None:
-            return LoginResponse(
-                success=False,
-                message="Login failed"
-            )
-        
-        return LoginResponse(
-            success=True,
-            message=f"{request.user_type.title()} login successful",
-            access_token=auth_response.session.access_token
-        )
-    except Exception as e:
-        return LoginResponse(
-            success=False,
-            message=f"Login error: {str(e)}"
-        )
 
 
 if __name__ == "__main__":
