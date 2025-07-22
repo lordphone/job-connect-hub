@@ -1,23 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-
-// Import AiEditor types and styles with error handling
-interface AiEditorInstance {
-  getContent?: () => string
-  getHtml?: () => string
-  getText?: () => string
-  getMarkdown?: () => string
-  getContentHtml?: () => string
-  getContentText?: () => string
-  destroy?: () => void
-}
-
-// Use dynamic import for AiEditor
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let AiEditor: any = null
-
-import 'aieditor/dist/style.css'
+import "aieditor/dist/style.css"
 
 interface AnalysisResult {
   matchPercentage: number
@@ -43,56 +27,57 @@ export default function ResumeEnhancer() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [showResults, setShowResults] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
-  const aiEditorRef = useRef<AiEditorInstance | null>(null)
+  const aiEditorRef = useRef<any>(null)
+
+  // Ensure we're on the client side before initializing AiEditor
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   useEffect(() => {
-    const initAiEditor = async () => {
-      if (editorRef.current && !aiEditorRef.current) {
+    if (isClient && editorRef.current && !aiEditorRef.current) {
+      const initAiEditor = async () => {
         try {
-          // Dynamic import of AiEditor
-          const aieditorModule = await import('aieditor')
-          AiEditor = aieditorModule.AiEditor
+          // Dynamic import only on client side
+          const { AiEditor } = await import('aieditor')
           
-          if (AiEditor) {
-            // Initialize AiEditor
-            aiEditorRef.current = new AiEditor({
-              element: editorRef.current,
-              placeholder: "Paste your resume here...",
-              content: '',
-              ai: {
-                models: {
-                  spark: {
-                    appId: "***",
-                    apiKey: "***",
-                    apiSecret: "***",
-                  }
+          const aiEditor = new AiEditor({
+            element: editorRef.current!,
+            placeholder: "Paste your resume here...",
+            content: '',
+            lang: "en", // Set language to English
+            ai: {
+              models: {
+                openai: {
+                  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+                  model: "gpt-4o-mini"
                 }
               }
-            })
-            setEditorError(null)
-          }
+            }
+          })
+          
+          aiEditorRef.current = aiEditor
+          setEditorError(null)
+          
         } catch (error) {
           console.error('AiEditor initialization error:', error)
           setEditorError('Failed to initialize editor. Using fallback textarea.')
         }
       }
-    }
 
-    initAiEditor()
+      initAiEditor()
+    }
 
     // Cleanup function
     return () => {
-      if (aiEditorRef.current) {
-        try {
-          aiEditorRef.current.destroy?.()
-        } catch (error) {
-          console.error('AiEditor cleanup error:', error)
-        }
+      if (aiEditorRef.current && aiEditorRef.current.destroy) {
+        aiEditorRef.current.destroy()
         aiEditorRef.current = null
       }
     }
-  }, [])
+  }, [isClient])
 
   const analyzeResume = (resume: string, jobDesc: string): AnalysisResult => {
     // Define skills categories
@@ -322,49 +307,42 @@ ${revisedLines.join('\n')}
     
     try {
       // Get content from AiEditor or fallback textarea
-      let resumeContent = ''
+      let currentResumeContent = ''
       
       if (aiEditorRef.current && !editorError) {
-        // Debug: log available methods
-        console.log('AiEditor instance methods:', Object.getOwnPropertyNames(aiEditorRef.current))
-        console.log('AiEditor instance:', aiEditorRef.current)
-        
-        // Try different methods to get content
-        if (aiEditorRef.current.getContent) {
-          resumeContent = aiEditorRef.current.getContent()
-        } else if (aiEditorRef.current.getHtml) {
-          resumeContent = aiEditorRef.current.getHtml()
-        } else if (aiEditorRef.current.getText) {
-          resumeContent = aiEditorRef.current.getText()
-        } else if (aiEditorRef.current.getMarkdown) {
-          resumeContent = aiEditorRef.current.getMarkdown()
-        } else if (aiEditorRef.current.getContentHtml) {
-          resumeContent = aiEditorRef.current.getContentHtml()
-        } else if (aiEditorRef.current.getContentText) {
-          resumeContent = aiEditorRef.current.getContentText()
-        } else {
-          // Fallback: try to get content from the editor element
-          const editorElement = editorRef.current?.querySelector('[contenteditable="true"]')
-          if (editorElement) {
-            resumeContent = editorElement.textContent || ''
+        // Use the correct AiEditor methods
+        try {
+          // Try getMarkdown first (preferred method according to docs)
+          currentResumeContent = aiEditorRef.current.getMarkdown()
+          console.log('Retrieved content from AiEditor (markdown):', currentResumeContent)
+        } catch (markdownError) {
+          try {
+            // Fallback to getHtml if available
+            currentResumeContent = aiEditorRef.current.getHtml()
+            console.log('Retrieved content from AiEditor (html):', currentResumeContent)
+          } catch (htmlError) {
+            // Final fallback: try to get content from the editor element
+            const editorElement = editorRef.current?.querySelector('[contenteditable="true"]')
+            if (editorElement) {
+              currentResumeContent = editorElement.textContent || ''
+              console.log('Retrieved content from editor element:', currentResumeContent)
+            }
           }
         }
-        
-        console.log('Retrieved content from AiEditor:', resumeContent)
       } else {
         // Use fallback textarea content from state
-        resumeContent = resumeContent
-        console.log('Using fallback textarea content:', resumeContent)
+        currentResumeContent = resumeContent
+        console.log('Using fallback textarea content:', currentResumeContent)
       }
       
-      if (!resumeContent.trim() || !jobDescription.trim()) {
+      if (!currentResumeContent.trim() || !jobDescription.trim()) {
         alert('Please provide both resume content and job description')
         setIsAnalyzing(false)
         return
       }
       
       // Perform analysis
-      const result = analyzeResume(resumeContent, jobDescription)
+      const result = analyzeResume(currentResumeContent, jobDescription)
       setAnalysisResult(result)
       setShowResults(true)
       
