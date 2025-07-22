@@ -83,7 +83,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+backend/lib/
 lib64/
 parts/
 sdist/
@@ -231,6 +231,7 @@ coverage.xml
 .hypothesis/
 
 GEMINI.md
+dev.sh
 
 # ==============================================================================
 # SECURITY

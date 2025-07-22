@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -24,14 +25,39 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userType, setUserType] = useState<string | null>(null)
 
-  // Check for existing token on component mount
+  // Check for existing session on component mount
   useEffect(() => {
-    const token = localStorage.getItem('userToken')
-    const storedUserType = localStorage.getItem('userType')
-    if (token && storedUserType) {
-      setIsLoggedIn(true)
-      setUserType(storedUserType)
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        const userType = session.user.user_metadata?.user_type || localStorage.getItem('userType')
+        if (userType) {
+          setIsLoggedIn(true)
+          setUserType(userType)
+          localStorage.setItem('userType', userType)
+        }
+      }
     }
+
+    checkSession()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const userType = session.user.user_metadata?.user_type || localStorage.getItem('userType')
+        if (userType) {
+          setIsLoggedIn(true)
+          setUserType(userType)
+          localStorage.setItem('userType', userType)
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setIsLoggedIn(false)
+        setUserType(null)
+        localStorage.removeItem('userType')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -98,30 +124,36 @@ export default function Home() {
     setAuthMessage('')
     
     try {
-      const response = await fetch('http://localhost:8000/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: signupData.email,
-          password: signupData.password,
-          user_type: signupUserType
-        })
+      console.log('Attempting signup with:', {
+        email: signupData.email,
+        user_type: signupUserType,
+        password_length: signupData.password.length
       })
 
-      const data = await response.json()
-      
-      if (data.success) {
-        setAuthMessage('Signup successful! Please log in.')
+      const { data, error } = await supabase.auth.signUp({
+        email: signupData.email,
+        password: signupData.password,
+        options: {
+          data: {
+            user_type: signupUserType
+          }
+        }
+      })
+
+      console.log('Supabase signup response:', { data, error })
+
+      if (error) {
+        console.error('Supabase signup error:', error)
+        setAuthMessage(error.message)
+      } else if (data.user) {
+        setAuthMessage('Signup successful! Please check your email to verify your account.')
         setShowSignupModal(false)
         setSignupData({ email: '', password: '', confirmPassword: '' })
         setSignupUserType(null)
-      } else {
-        setAuthMessage(data.message)
       }
-    } catch {
-      setAuthMessage('Error connecting to server. Please try again.')
+    } catch (error) {
+      console.error('Unexpected signup error:', error)
+      setAuthMessage('An unexpected error occurred. Please try again.')
     } finally {
       setIsAuthLoading(false)
     }
@@ -139,48 +171,49 @@ export default function Home() {
     setAuthMessage('')
     
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: loginData.email,
-          password: loginData.password,
-          user_type: userType
-        })
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password
       })
 
-      const data = await response.json()
-      
-      if (data.success) {
+      if (error) {
+        setAuthMessage(error.message)
+      } else if (data.user) {
+        // Check if user_type matches what they selected
+        const storedUserType = data.user.user_metadata?.user_type
+        if (storedUserType !== userType) {
+          setAuthMessage(`This account is registered as a ${storedUserType}. Please select the correct user type.`)
+          return
+        }
+
         setAuthMessage('Login successful!')
         setShowLoginModal(false)
         setLoginData({ email: '', password: '' })
         setIsLoggedIn(true)
-        // Store token and user type in localStorage for persistence
-        if (data.access_token) {
-          localStorage.setItem('userToken', data.access_token)
-          localStorage.setItem('userType', userType || '')
-        }
+        
+        // Store user type for persistence (session is handled by Supabase)
+        localStorage.setItem('userType', userType)
+        
         // Redirect to the appropriate dashboard
         setActiveTab(userType as TabType)
-      } else {
-        setAuthMessage(data.message)
       }
-    } catch {
-      setAuthMessage('Error connecting to server. Please try again.')
+    } catch (error) {
+      console.error('Unexpected login error:', error)
+      setAuthMessage('An unexpected error occurred. Please try again.')
     } finally {
       setIsAuthLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    setIsLoggedIn(false)
-    setUserType(null)
-    localStorage.removeItem('userToken')
-    localStorage.removeItem('userType')
-    setAuthMessage('Logged out successfully')
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut()
+      setAuthMessage('Logged out successfully')
+      // State will be updated by the onAuthStateChange listener
+    } catch (error) {
+      console.error('Logout error:', error)
+      setAuthMessage('Error logging out. Please try again.')
+    }
   }
 
   const TabButton = ({ label, isActive, onClick }: {
