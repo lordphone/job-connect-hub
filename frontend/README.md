@@ -1,5 +1,22 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Setup
+
+Before running the application, you need to set up environment variables for the AI features:
+
+1. Create a `.env.local` file in the frontend directory:
+```bash
+# In the frontend directory
+touch .env.local
+```
+
+2. Add your OpenAI API key to the `.env.local` file:
+```
+NEXT_PUBLIC_OPENAI_API_KEY=your_actual_openai_api_key_here
+```
+
+**Note:** Replace `your_actual_openai_api_key_here` with your real OpenAI API key. You can get one from [OpenAI's platform](https://platform.openai.com/api-keys).
+
 ## Getting Started
 
 First, run the development server:
