@@ -18,6 +18,7 @@ interface AiEditorInstance {
 let AiEditor: any = null
 
 import 'aieditor/dist/style.css'
+import { OpenaiModelConfig } from 'aieditor'
 
 interface AnalysisResult {
   matchPercentage: number
@@ -43,6 +44,7 @@ export default function ResumeEnhancer() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [showResults, setShowResults] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const aiEditorRef = useRef<AiEditorInstance | null>(null)
 
@@ -50,6 +52,14 @@ export default function ResumeEnhancer() {
     const initAiEditor = async () => {
       if (editorRef.current && !aiEditorRef.current) {
         try {
+          // Check if API key is available
+          const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+          if (!apiKey) {
+            setApiKeyError('OpenAI API key not found. Please set NEXT_PUBLIC_OPENAI_API_KEY in your .env.local file.')
+            setEditorError('AI features disabled due to missing API key. Using fallback textarea.')
+            return
+          }
+          
           // Dynamic import of AiEditor
           const aieditorModule = await import('aieditor')
           AiEditor = aieditorModule.AiEditor
@@ -60,17 +70,48 @@ export default function ResumeEnhancer() {
               element: editorRef.current,
               placeholder: "Paste your resume here...",
               content: '',
+              lang: 'en',
               ai: {
                 models: {
-                  spark: {
-                    appId: "***",
-                    apiKey: "***",
-                    apiSecret: "***",
+                  openai: {
+                    apiKey: apiKey,
+                    model: 'gpt-4o-mini'
+                  } as OpenaiModelConfig,
+                },
+                menus: [
+                  {
+                      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M4 18.9997H20V13.9997H22V19.9997C22 20.552 21.5523 20.9997 21 20.9997H3C2.44772 20.9997 2 20.552 2 19.9997V13.9997H4V18.9997ZM16.1716 6.9997L12.2218 3.04996L13.636 1.63574L20 7.9997L13.636 14.3637L12.2218 12.9495L16.1716 8.9997H5V6.9997H16.1716Z"></path></svg>`,
+                      name: "ai-continuation",
+                      prompt: "{content}\n\nPlease help me continue and expand this text. Return only the expanded content without any explanations.",
+                      text: "focusBefore",
+                      model: "auto",
+                  },
+                  {
+                      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M15 5.25C16.7949 5.25 18.25 3.79493 18.25 2H19.75C19.75 3.79493 21.2051 5.25 23 5.25V6.75C21.2051 6.75 19.75 8.20507 19.75 10H18.25C18.25 8.20507 16.7949 6.75 15 6.75V5.25ZM4 7C4 5.89543 4.89543 5 6 5H13V3H6C3.79086 3 2 4.79086 2 7V17C2 19.2091 3.79086 21 6 21H18C20.2091 21 22 19.2091 22 17V12H20V17C20 18.1046 19.1046 19 18 19H6C4.89543 19 4 18.1046 4 17V7Z"></path></svg>`,
+                      name: "ai-optimization",
+                      prompt: "{content}\n\nPlease help me optimize this text and return the improved version. Return only the optimized content without any explanations.",
+                      text: "selected",
+                      model: "auto",
+                  },
+                  {
+                      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M17.934 3.0359L19.666 4.0359L18.531 6H21V8H19V12H21V14H19V21H17V14L13.9157 14.0004C13.5914 16.8623 12.3522 19.3936 10.5466 21.1933L8.98361 19.9233C10.5031 18.4847 11.5801 16.4008 11.9008 14.0009L10 14V12L12 11.999V8H10V6H12.467L11.334 4.0359L13.066 3.0359L14.777 6H16.221L17.934 3.0359ZM5 13.803L3 14.339V12.268L5 11.732V8H3V6H5V3H7V6H9V8H7V11.197L9 10.661V12.731L7 13.267V18.5C7 19.8807 5.88071 21 4.5 21H3V19H4.5C4.74546 19 4.94961 18.8231 4.99194 18.5899L5 18.5V13.803ZM17 8H14V12H17V8Z"></path></svg>`,
+                      name: "ai-proofreading",
+                      prompt: "{content}\n\nPlease help me find and correct any spelling or grammatical errors in this text. Return only the corrected text without any explanations.",
+                      text: "selected",
+                      model: "auto",
+                  },
+                  {
+                      icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M5 15V17C5 18.0544 5.81588 18.9182 6.85074 18.9945L7 19H10V21H7C4.79086 21 3 19.2091 3 17V15H5ZM18 10L22.4 21H20.245L19.044 18H14.954L13.755 21H11.601L16 10H18ZM17 12.8852L15.753 16H18.245L17 12.8852ZM8 2V4H12V11H8V14H6V11H2V4H6V2H8ZM17 3C19.2091 3 21 4.79086 21 7V9H19V7C19 5.89543 18.1046 5 17 5H14V3H17ZM6 6H4V9H6V6ZM10 6H8V9H10V6Z"></path></svg>`,
+                      name: "ai-translation",
+                      prompt: "Please help me translate this content. If it's in English, translate it to Chinese. If it's in another language, translate it to English. Return only the translation without any explanations.",
+                      text: "selected",
+                      model: "auto",
                   }
-                }
+                ]
               }
             })
             setEditorError(null)
+            setApiKeyError(null)
           }
         } catch (error) {
           console.error('AiEditor initialization error:', error)
@@ -417,6 +458,29 @@ ${revisedLines.join('\n')}
       <div className="container mx-auto px-4 py-6">
         {!showResults ? (
           <div className="bg-white rounded-lg shadow-lg p-6">
+            {/* API Key Warning */}
+            {apiKeyError && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">API Key Required</h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>{apiKeyError}</p>
+                      <p className="mt-1">Create a <code className="bg-yellow-100 px-1 rounded">.env.local</code> file in the frontend directory with:</p>
+                      <pre className="mt-1 bg-yellow-100 p-2 rounded text-xs overflow-x-auto">
+NEXT_PUBLIC_OPENAI_API_KEY=your_actual_api_key_here
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* AiEditor container */}
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Your Resume</h3>
             {editorError ? (
