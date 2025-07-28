@@ -19,7 +19,6 @@ let AiEditor: any = null
 
 import 'aieditor/dist/style.css'
 import { OpenaiModelConfig } from 'aieditor'
-import { OpenaiModelConfig } from 'aieditor'
 
 interface AnalysisResult {
   matchPercentage: number
@@ -46,22 +45,13 @@ export default function ResumeEnhancer() {
   const [showResults, setShowResults] = useState(false)
   const [editorError, setEditorError] = useState<string | null>(null)
   const [apiKeyError, setApiKeyError] = useState<string | null>(null)
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const aiEditorRef = useRef<AiEditorInstance | null>(null)
 
   useEffect(() => {
     const initAiEditor = async () => {
       if (editorRef.current && !aiEditorRef.current) {
-        try {
-          // Check if API key is available
-          const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
-          if (!apiKey) {
-            setApiKeyError('OpenAI API key not found. Please set NEXT_PUBLIC_OPENAI_API_KEY in your .env.local file.')
-            setEditorError('AI features disabled due to missing API key. Using fallback textarea.')
-            return
-          }
-          
+        try {          
           // Check if API key is available
           const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
           if (!apiKey) {
@@ -82,7 +72,6 @@ export default function ResumeEnhancer() {
               content: '',
               lang: 'en',
               contentIsMarkdown: true,
-              lang: 'en',
               ai: {
                 models: {
                   openai: {
