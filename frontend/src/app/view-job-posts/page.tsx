@@ -7,6 +7,8 @@ interface JobPost {
   job_post_id: string;
   job_title: string;
   job_description: string;
+  job_salary: number;
+  job_type: string;
   created_at: string;
   user_id: string;
 }
@@ -15,6 +17,7 @@ export default function ViewJobPosts() {
   const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchJobPosts();
@@ -79,6 +82,44 @@ export default function ViewJobPosts() {
     });
   };
 
+  const formatSalary = (salary: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(salary);
+  };
+
+  const formatJobType = (jobType: string) => {
+    return jobType.charAt(0).toUpperCase() + jobType.slice(1).replace('-', ' ');
+  };
+
+  const toggleExpanded = (jobPostId: string) => {
+    setExpandedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobPostId)) {
+        newSet.delete(jobPostId);
+      } else {
+        newSet.add(jobPostId);
+      }
+      return newSet;
+    });
+  };
+
+  const truncateDescription = (description: string, maxLines: number = 3) => {
+    const lines = description.split('\n');
+    if (lines.length <= maxLines) return description;
+    
+    // Take the first maxLines and add ellipsis
+    const truncatedLines = lines.slice(0, maxLines);
+    return truncatedLines.join('\n') + '\n...';
+  };
+
+  const getDescriptionLineCount = (description: string) => {
+    return description.split('\n').length;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -133,14 +174,39 @@ export default function ViewJobPosts() {
             {jobPosts.map((jobPost) => (
               <div key={jobPost.job_post_id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-semibold text-gray-800">{jobPost.job_title}</h3>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{jobPost.job_title}</h3>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <span className="font-medium text-green-600">{formatSalary(jobPost.job_salary)}</span>
+                      </span>
+                      <span className="flex items-center">
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {formatJobType(jobPost.job_type)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                   <span className="text-sm text-gray-500">
                     {formatDate(jobPost.created_at)}
                   </span>
                 </div>
-                <p className="text-gray-600 mb-4 whitespace-pre-wrap">
-                  {jobPost.job_description}
-                </p>
+                <div className="text-gray-600 mb-4">
+                  <p className="whitespace-pre-wrap">
+                    {expandedPosts.has(jobPost.job_post_id) 
+                      ? jobPost.job_description 
+                      : truncateDescription(jobPost.job_description)
+                    }
+                  </p>
+                  {getDescriptionLineCount(jobPost.job_description) > 3 && (
+                    <button
+                      onClick={() => toggleExpanded(jobPost.job_post_id)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2"
+                    >
+                      {expandedPosts.has(jobPost.job_post_id) ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
                 <div className="flex space-x-2">
                   <button className="text-red-600 hover:text-red-800 text-sm font-medium" onClick={() => handleDelete(jobPost.job_post_id)}>
                     Delete
