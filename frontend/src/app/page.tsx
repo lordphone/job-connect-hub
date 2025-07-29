@@ -427,7 +427,10 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Create and publish new job postings to attract top talent.
                 </p>
-                <button className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+                <button
+                  className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  onClick={() => window.open('/create-job-post', '_blank')}
+                >
                   Create Job Post
                 </button>
               </div>
@@ -439,7 +442,10 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   View, edit, and manage your existing job postings and their status.
                 </p>
-                <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                <button
+                  className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  onClick={() => window.open('/view-job-posts', '_blank')}
+                >
                   View Jobs
                 </button>
               </div>
