@@ -32,6 +32,12 @@ export default function ResumeEnhancer() {
   const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const aiEditorRef = useRef<any>(null)
+  
+  // Modal state for job tailor function
+  const [showJobTailorModal, setShowJobTailorModal] = useState(false)
+  const [jobTailorDescription, setJobTailorDescription] = useState('')
+  const [selectedTextForTailor, setSelectedTextForTailor] = useState('')
+  const [isTailoring, setIsTailoring] = useState(false)
 
   // Ensure we're on the client side before initializing AiEditor
   useEffect(() => {
@@ -73,10 +79,24 @@ export default function ResumeEnhancer() {
                   text: "selected",
                   model: "auto",
                 },
+                                 {
+                   icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M5 3V19H21V21H3V3H5ZM19.9393 5.93934L22.0607 8.06066L16 14.1213L13 11.1213L9.06066 15.0607L7.64645 13.6464L13 8.29289L16 11.2929L19.9393 5.93934Z"></path></svg>`,
+                   name: "Add Metrics & Achievements",
+                   prompt: "Please help me add specific metrics, numbers, and quantifiable achievements to make this resume content more impactful.",
+                   text: "selected",
+                   model: "auto",
+                 },
+                 {
+                   icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 13L13.5 7.5C13.1 6.8 12.4 6.3 11.7 6.3C11 6.3 10.3 6.8 9.9 7.5L6 18H8L11.2 10L12 13H14L20 7V9H21Z"></path></svg>`,
+                   name: "Tailor to Job",
+                   text: "selected",
+                   model: "auto",
+                   onClick: handleJobTailorClick
+                 },
                 {
-                  icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M5 3V19H21V21H3V3H5ZM19.9393 5.93934L22.0607 8.06066L16 14.1213L13 11.1213L9.06066 15.0607L7.64645 13.6464L13 8.29289L16 11.2929L19.9393 5.93934Z"></path></svg>`,
-                  name: "Add Metrics & Achievements",
-                  prompt: "Please help me add specific metrics, numbers, and quantifiable achievements to make this resume content more impactful.",
+                  icon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z"></path><path d="M12 19C12.8284 19 13.5 19.6716 13.5 20.5C13.5 21.3284 12.8284 22 12 22C11.1716 22 10.5 21.3284 10.5 20.5C10.5 19.6716 11.1716 19 12 19ZM6.5 19C7.32843 19 8 19.6716 8 20.5C8 21.3284 7.32843 22 6.5 22C5.67157 22 5 21.3284 5 20.5C5 19.6716 5.67157 19 6.5 19ZM17.5 19C18.3284 19 19 19.6716 19 20.5C19 21.3284 18.3284 22 17.5 22C16.6716 22 16 21.3284 16 20.5C16 19.6716 16.6716 19 17.5 19ZM13 2V4H19V6L17.0322 6.0006C16.2423 8.3666 14.9984 10.5065 13.4107 12.302C14.9544 13.6737 16.7616 14.7204 18.7379 15.3443L18.2017 17.2736C15.8917 16.5557 13.787 15.3326 12.0005 13.7257C10.214 15.332 8.10914 16.5553 5.79891 17.2734L5.26257 15.3442C7.2385 14.7203 9.04543 13.6737 10.5904 12.3021C9.46307 11.0285 8.50916 9.58052 7.76789 8.00128L10.0074 8.00137C10.5706 9.03952 11.2401 10.0037 11.9998 10.8772C13.2283 9.46508 14.2205 7.81616 14.9095 6.00101L5 6V4H11V2H13Z"></path></svg>`,
+                  name: "Emoji - Test",
+                  prompt: "Rewrite this part of the resume with emojis only. No text allowed",
                   text: "selected",
                   model: "auto",
                 },
@@ -130,227 +150,402 @@ export default function ResumeEnhancer() {
     }
   }, [isClient])
 
-  const analyzeResume = (resume: string, jobDesc: string): AnalysisResult => {
-    // Define skills categories
-    const technicalSkills = {
-      programming: ['python', 'java', 'javascript', 'c++', 'c#', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'scala'],
-      databases: ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'oracle', 'sqlite', 'dynamodb'],
-      frameworks: ['django', 'flask', 'fastapi', 'spring', 'react', 'angular', 'vue', 'node.js', 'express', 'laravel'],
-      cloud: ['aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'jenkins', 'gitlab'],
-      tools: ['git', 'github', 'jira', 'confluence', 'slack', 'figma', 'postman', 'swagger']
+  // Handle custom job tailor function
+  const handleJobTailorClick = () => {
+    if (!aiEditorRef.current) {
+      alert('Editor not ready')
+      return
     }
-    
-    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'creative', 'organized', 'detail-oriented', 'time management', 'collaboration']
-    
-    // Convert to lowercase for comparison
-    const resumeLower = resume.toLowerCase()
-    const jobDescLower = jobDesc.toLowerCase()
-    
-    // Extract skills
-    const resumeSkills = new Set<string>()
-    const jobSkills = new Set<string>()
-    
-    // Check technical skills
-    Object.values(technicalSkills).flat().forEach(skill => {
-      if (resumeLower.includes(skill)) resumeSkills.add(skill)
-      if (jobDescLower.includes(skill)) jobSkills.add(skill)
-    })
-    
-    // Check soft skills
-    softSkills.forEach(skill => {
-      if (resumeLower.includes(skill)) resumeSkills.add(skill)
-      if (jobDescLower.includes(skill)) jobSkills.add(skill)
-    })
-    
-    // Calculate matches
-    const missingSkills = new Set([...jobSkills].filter(skill => !resumeSkills.has(skill)))
-    const matchingSkills = new Set([...resumeSkills].filter(skill => jobSkills.has(skill)))
-    const matchPercentage = jobSkills.size > 0 ? (matchingSkills.size / jobSkills.size) * 100 : 0
-    
-    // Check action verbs
-    const actionVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'built', 'optimized', 'increased', 'decreased', 'improved', 'delivered']
-    const foundVerbs = actionVerbs.filter(verb => resumeLower.includes(verb))
-    
-    // Check for numbers/quantification
-    const numbers = resume.match(/\d+/g) || []
-    const quantified = numbers.length >= 2
-    
-    // Generate suggestions
-    const suggestions: string[] = []
-    
-    if (missingSkills.size > 0) {
-      suggestions.push("🔍 **Missing Skills to Add:**")
-      missingSkills.forEach(skill => {
-        suggestions.push(`   • Consider adding experience with ${skill.charAt(0).toUpperCase() + skill.slice(1)}`)
+
+    try {
+      // Try different methods to get selected text
+      let selectedText = ''
+      
+      // Method 1: Try getSelectedText
+      if (typeof aiEditorRef.current.getSelectedText === 'function') {
+        selectedText = aiEditorRef.current.getSelectedText()
+      }
+      
+      // Method 2: Try getSelection
+      if (!selectedText && typeof aiEditorRef.current.getSelection === 'function') {
+        const selection = aiEditorRef.current.getSelection()
+        selectedText = selection?.toString() || ''
+      }
+      
+      // Method 3: Try using window selection as fallback
+      if (!selectedText) {
+        const windowSelection = window.getSelection()
+        selectedText = windowSelection?.toString() || ''
+      }
+      
+      if (!selectedText.trim()) {
+        alert('Please select some text in your resume to tailor')
+        return
+      }
+
+      setSelectedTextForTailor(selectedText)
+      setShowJobTailorModal(true)
+    } catch (error) {
+      console.error('Error getting selected text:', error)
+      alert('Could not get selected text. Please try again.')
+    }
+  }
+
+  const handleJobTailorSubmit = async () => {
+    if (!jobTailorDescription.trim()) {
+      alert('Please enter a job description')
+      return
+    }
+
+    if (!selectedTextForTailor.trim()) {
+      alert('No text selected')
+      return
+    }
+
+    setIsTailoring(true)
+
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+      
+      if (!apiKey) {
+        throw new Error('OpenAI API key not configured')
+      }
+
+      const tailorPrompt = `
+You are an expert resume writer. Please rewrite the following resume section to better align with the specific job description provided.
+
+RESUME SECTION TO REWRITE:
+"{content}"
+
+JOB DESCRIPTION:
+${jobTailorDescription}
+
+Instructions:
+1. Maintain all factual information from the original resume section
+2. Use keywords and terminology from the job description where appropriate
+3. Emphasize skills and experiences that are most relevant to this specific job
+4. Use stronger action verbs and more impactful language
+5. Ensure the content flows naturally and reads professionally
+6. Keep the same general structure but optimize the language for this job
+
+Return only the improved resume section, no additional explanations or formatting.`
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert resume writer. Return only the improved resume content, no additional text or formatting.'
+            },
+            {
+              role: 'user',
+              content: tailorPrompt.replace('{content}', selectedTextForTailor)
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1000
+        })
       })
-      suggestions.push("")
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`)
+      }
+
+      const data = await response.json()
+      const tailoredContent = data.choices[0]?.message?.content
+
+      if (!tailoredContent) {
+        throw new Error('No content received from AI')
+      }
+
+      // Try multiple methods to replace the text
+      let textReplaced = false
+      
+      // Method 1: Try replaceSelectedText
+      if (typeof aiEditorRef.current.replaceSelectedText === 'function') {
+        try {
+          aiEditorRef.current.replaceSelectedText(tailoredContent)
+          textReplaced = true
+        } catch (err) {
+          // Continue to next method
+        }
+      }
+      
+      // Method 2: Try insertText
+      if (!textReplaced && typeof aiEditorRef.current.insertText === 'function') {
+        try {
+          aiEditorRef.current.insertText(tailoredContent)
+          textReplaced = true
+        } catch (err) {
+          // Continue to next method
+        }
+      }
+      
+      // Method 3: Try using the editor's insert method
+      if (!textReplaced && typeof aiEditorRef.current.insert === 'function') {
+        try {
+          aiEditorRef.current.insert(tailoredContent)
+          textReplaced = true
+        } catch (err) {
+          // Continue to next method
+        }
+      }
+      
+      // Method 4: Try executing a command
+      if (!textReplaced && typeof aiEditorRef.current.chain === 'function') {
+        try {
+          aiEditorRef.current.chain().focus().insertContent(tailoredContent).run()
+          textReplaced = true
+        } catch (err) {
+          // Continue to next method
+        }
+      }
+      
+      // Method 5: Try setContent as last resort (replaces all content)
+      if (!textReplaced && typeof aiEditorRef.current.setContent === 'function') {
+        try {
+          const currentContent = aiEditorRef.current.getMarkdown() || aiEditorRef.current.getHtml() || ''
+          const newContent = currentContent.replace(selectedTextForTailor, tailoredContent)
+          aiEditorRef.current.setContent(newContent)
+          textReplaced = true
+        } catch (err) {
+          // Continue to fallback
+        }
+      }
+      
+      if (!textReplaced) {
+        // Show the result in an alert as fallback
+        alert(`Tailored content (please copy and paste manually):\n\n${tailoredContent}`)
+      }
+
+      // Close modal and reset state
+      setShowJobTailorModal(false)
+      setJobTailorDescription('')
+      setSelectedTextForTailor('')
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Error tailoring resume: ${errorMessage}`)
+    } finally {
+      setIsTailoring(false)
     }
-    
-    if (matchPercentage < 50) {
-      suggestions.push("⚠️ **Low Skill Match Detected:**")
-      suggestions.push("   • Your resume shows limited alignment with the job requirements")
-      suggestions.push("   • Consider highlighting transferable skills and experiences")
-      suggestions.push("")
-    }
-    
-    if (foundVerbs.length < 3) {
-      suggestions.push("📝 **Resume Writing Tips:**")
-      suggestions.push("   • Use more action verbs to describe your achievements")
-      suggestions.push("   • Quantify your accomplishments with specific numbers")
-      suggestions.push("   • Focus on results rather than just responsibilities")
-      suggestions.push("")
-    }
-    
-    if (!quantified) {
-      suggestions.push("📊 **Quantify Your Achievements:**")
-      suggestions.push("   • Add specific metrics (e.g., 'increased sales by 25%')")
-      suggestions.push("   • Include project sizes, team sizes, or timeframes")
-      suggestions.push("   • Mention any awards, certifications, or recognitions")
-      suggestions.push("")
-    }
-    
-    if (resume.length < 1000) {
-      suggestions.push("📏 **Resume Length:**")
-      suggestions.push("   • Your resume seems quite short")
-      suggestions.push("   • Consider adding more details about your experiences")
-      suggestions.push("   • Include relevant projects, certifications, or volunteer work")
-      suggestions.push("")
-    } else if (resume.length > 3000) {
-      suggestions.push("📏 **Resume Length:**")
-      suggestions.push("   • Your resume might be too long")
-      suggestions.push("   • Focus on the most relevant experiences for this position")
-      suggestions.push("   • Remove outdated or less relevant information")
-      suggestions.push("")
-    }
-    
-    // Generate revised resume
-    const revisedResume = generateRevisedResume(resume, Array.from(jobSkills), Array.from(missingSkills), actionVerbs, foundVerbs)
-    
-    return {
-      matchPercentage,
-      matchingSkills: Array.from(matchingSkills),
-      jobSkills: Array.from(jobSkills),
-      missingSkills: Array.from(missingSkills),
-      suggestions,
-      revisedResume,
-      resumeStats: {
-        length: resume.length,
-        wordCount: resume.split(/\s+/).length,
-        actionVerbs: foundVerbs.length,
-        quantified
+  }
+
+  const analyzeResume = async (resume: string, jobDesc: string): Promise<AnalysisResult> => {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+      if (!apiKey) {
+        throw new Error('OpenAI API key not configured')
+      }
+
+      const analysisPrompt = `
+You are an expert resume analyzer and career coach. Analyze the provided resume against the job description and return a structured JSON response.
+
+RESUME:
+${resume}
+
+JOB DESCRIPTION:
+${jobDesc}
+
+Please analyze and return a JSON object with the following structure:
+{
+  "matchPercentage": number (0-100, how well the resume matches the job requirements),
+  "matchingSkills": string[] (skills/technologies the candidate has that match job requirements),
+  "jobSkills": string[] (all skills/technologies mentioned in the job description),
+  "missingSkills": string[] (important skills from job description not found in resume),
+  "suggestions": string[] (specific actionable improvement suggestions with emojis),
+  "resumeStats": {
+    "actionVerbs": number (count of strong action verbs found),
+    "quantified": boolean (whether resume includes metrics/numbers)
+  }
+}
+
+Focus on:
+- Technical skills, soft skills, experience level, certifications
+- Quality of language (action verbs, quantified achievements)
+- Alignment with job requirements and industry standards
+- Specific, actionable suggestions for improvement
+
+Be thorough but concise. Include emojis in suggestions for better readability.`
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert resume analyzer. Always respond with valid JSON only, no additional text.'
+            },
+            {
+              role: 'user',
+              content: analysisPrompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const analysisContent = data.choices[0]?.message?.content
+
+      if (!analysisContent) {
+        throw new Error('No analysis content received from OpenAI')
+      }
+
+      let analysisData
+      try {
+        analysisData = JSON.parse(analysisContent)
+      } catch (parseError) {
+        console.error('Failed to parse AI response:', analysisContent)
+        throw new Error('Invalid response format from AI')
+      }
+
+      // Generate revised resume using AI
+      const revisedResume = await generateAIRevisedResume(resume, jobDesc, analysisData)
+
+      return {
+        matchPercentage: analysisData.matchPercentage || 0,
+        matchingSkills: analysisData.matchingSkills || [],
+        jobSkills: analysisData.jobSkills || [],
+        missingSkills: analysisData.missingSkills || [],
+        suggestions: analysisData.suggestions || [],
+        revisedResume,
+        resumeStats: {
+          length: resume.length,
+          wordCount: resume.split(/\s+/).length,
+          actionVerbs: analysisData.resumeStats?.actionVerbs || 0,
+          quantified: analysisData.resumeStats?.quantified || false
+        }
+      }
+
+    } catch (error) {
+      console.error('Error in AI analysis:', error)
+      // Fallback to basic analysis if AI fails
+      return {
+        matchPercentage: 0,
+        matchingSkills: [],
+        jobSkills: [],
+        missingSkills: [],
+        suggestions: ['❌ AI analysis failed. Please check your OpenAI API key configuration.'],
+        revisedResume: resume,
+        resumeStats: {
+          length: resume.length,
+          wordCount: resume.split(/\s+/).length,
+          actionVerbs: 0,
+          quantified: false
+        }
       }
     }
   }
 
-  const generateRevisedResume = (resume: string, jobSkills: string[], missingSkills: string[], actionVerbs: string[], foundVerbs: string[]): string => {
-    const lines = resume.split('\n')
-    const revisedLines: string[] = []
-    
-    const suggestedVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'built', 'optimized', 'increased', 'decreased', 'improved', 'delivered']
-    const weakVerbs = ['did', 'worked on', 'helped with', 'was involved in', 'participated in']
-    
-    lines.forEach(line => {
-      const originalLine = line.trim()
-      if (!originalLine) {
-        revisedLines.push(line)
-        return
+  const generateAIRevisedResume = async (resume: string, jobDesc: string, analysisData: any): Promise<string> => {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
+      if (!apiKey) {
+        return resume // Fallback to original resume
       }
-      
-      let revisedLine = originalLine
-      
-      // Highlight missing skills
-      missingSkills.forEach(skill => {
-        const skillVariations = [skill, skill.charAt(0).toUpperCase() + skill.slice(1), skill.toUpperCase()]
-        const skillFound = skillVariations.some(variation => 
-          originalLine.toLowerCase().includes(variation.toLowerCase())
-        )
-        
-        if (!skillFound) {
-          if (['experience', 'skills', 'proficient', 'knowledge'].some(word => 
-            originalLine.toLowerCase().includes(word)
-          )) {
-            revisedLine += ` <span class="suggestion-add">[Consider adding: ${skill.charAt(0).toUpperCase() + skill.slice(1)}]</span>`
-          }
-        }
+
+      const revisionPrompt = `
+You are an expert resume writer. Please rewrite the following resume to better align with the job description, incorporating the analysis insights.
+
+ORIGINAL RESUME:
+${resume}
+
+JOB DESCRIPTION:
+${jobDesc}
+
+ANALYSIS INSIGHTS:
+- Missing Skills: ${analysisData.missingSkills?.join(', ') || 'None identified'}
+- Match Percentage: ${analysisData.matchPercentage || 0}%
+- Suggestions: ${analysisData.suggestions?.join('; ') || 'None'}
+
+Please return an improved resume that:
+1. Maintains all factual information from the original
+2. Uses stronger action verbs and more impactful language
+3. Better highlights relevant skills and experiences for this specific job
+4. Includes suggestions for adding missing skills where appropriate
+5. Improves formatting and readability
+6. Adds placeholders for quantified achievements where they're missing
+
+Format the response as HTML with these CSS classes for highlighting:
+- Use <span class="skill-match">SKILL</span> for skills that match job requirements
+- Use <span class="suggestion-add">[Suggestion: ADD_THIS]</span> for areas needing improvement
+- Use <span class="suggestion-quantify">[Add metrics: X% increase, $Y saved, etc.]</span> for quantification opportunities
+- Use <span class="suggestion-improvement">IMPROVED_TEXT</span> for enhanced language
+
+Return only the formatted resume content, no additional explanations.`
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert resume writer. Return only the improved resume content in HTML format with the specified CSS classes.'
+            },
+            {
+              role: 'user',
+              content: revisionPrompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 3000
+        })
       })
-      
-      // Suggest better action verbs
-      weakVerbs.forEach(weakVerb => {
-        if (originalLine.toLowerCase().includes(weakVerb)) {
-          const betterVerb = suggestedVerbs.find(verb => 
-            !foundVerbs.includes(verb) && !originalLine.toLowerCase().includes(verb)
-          )
-          
-          if (betterVerb) {
-            const regex = new RegExp(`\\b${weakVerb}\\b`, 'gi')
-            revisedLine = revisedLine.replace(regex, 
-              `<span class="suggestion-verb">${weakVerb}</span> → <span class="suggestion-improvement">${betterVerb}</span>`
-            )
-          }
-        }
-      })
-      
-      // Suggest quantification
-      if (!/\d+/.test(originalLine) && 
-          ['managed', 'led', 'increased', 'improved', 'developed'].some(word => 
-            originalLine.toLowerCase().includes(word)
-          )) {
-        if (originalLine.toLowerCase().includes('team')) {
-          revisedLine += ' <span class="suggestion-quantify">[Add: "team of X people"]</span>'
-        } else if (originalLine.toLowerCase().includes('project')) {
-          revisedLine += ' <span class="suggestion-quantify">[Add: "X projects"]</span>'
-        } else if (originalLine.toLowerCase().includes('increase') || originalLine.toLowerCase().includes('improve')) {
-          revisedLine += ' <span class="suggestion-quantify">[Add: "by X%"]</span>'
-        } else {
-          revisedLine += ' <span class="suggestion-quantify">[Add specific metrics]</span>'
-        }
+
+      if (!response.ok) {
+        console.error('OpenAI API error for resume revision:', response.status)
+        return resume // Fallback to original resume
       }
-      
-      // Highlight existing skills that match job requirements
-      jobSkills.forEach(skill => {
-        if (originalLine.toLowerCase().includes(skill.toLowerCase())) {
-          const regex = new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi')
-          revisedLine = revisedLine.replace(regex, `<span class="skill-match">${skill}</span>`)
-        }
-      })
-      
-      revisedLines.push(revisedLine)
-    })
-    
-    // Add improvement summary
-    const improvementSummary: string[] = []
-    
-    if (missingSkills.length > 0) {
-      improvementSummary.push(`<strong>Add these skills:</strong> ${missingSkills.join(', ')}`)
-    }
-    
-    if (foundVerbs.length < 5) {
-      const suggestedVerbsToAdd = suggestedVerbs.filter(v => !foundVerbs.includes(v)).slice(0, 5)
-      improvementSummary.push(`<strong>Use more action verbs:</strong> ${suggestedVerbsToAdd.join(', ')}`)
-    }
-    
-    if (!/\d+/.test(resume)) {
-      improvementSummary.push("<strong>Add quantification:</strong> Include specific numbers and metrics")
-    }
-    
-    let summaryHtml = ""
-    if (improvementSummary.length > 0) {
-      summaryHtml = `
+
+      const data = await response.json()
+      const revisedContent = data.choices[0]?.message?.content
+
+      if (!revisedContent) {
+        console.error('No revised content received from OpenAI')
+        return resume // Fallback to original resume
+      }
+
+      // Add improvement summary at the top
+      const improvementSummary = `
 <div class="improvement-summary">
-<h4>🎯 Key Improvements Suggested:</h4>
+<h4>🎯 AI-Enhanced Resume Analysis:</h4>
 <ul>
-${improvementSummary.map(item => `<li>${item}</li>`).join('')}
+<li><strong>Match Score:</strong> ${analysisData.matchPercentage || 0}% alignment with job requirements</li>
+${analysisData.missingSkills?.length > 0 ? `<li><strong>Missing Skills to Highlight:</strong> ${analysisData.missingSkills.join(', ')}</li>` : ''}
+<li><strong>Key Improvements:</strong> Enhanced language, better skill highlighting, and formatting optimization</li>
 </ul>
 </div>
 `
+
+      return `${improvementSummary}<div class="resume-content">${revisedContent}</div>`
+
+    } catch (error) {
+      console.error('Error generating AI revised resume:', error)
+      return resume // Fallback to original resume
     }
-    
-    return `
-${summaryHtml}
-<div class="resume-content">
-${revisedLines.join('\n')}
-</div>
-`
   }
 
   const handleAnalyzeResume = async () => {
@@ -393,7 +588,7 @@ ${revisedLines.join('\n')}
       }
       
       // Perform analysis
-      const result = analyzeResume(currentResumeContent, jobDescription)
+      const result = await analyzeResume(currentResumeContent, jobDescription)
       setAnalysisResult(result)
       setShowResults(true)
       
@@ -617,6 +812,73 @@ NEXT_PUBLIC_OPENAI_API_KEY=your_actual_api_key_here
           </div>
         )}
       </div>
+
+      {/* Job Tailor Modal */}
+      {showJobTailorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Tailor Resume Section to Job</h2>
+              <button
+                onClick={() => {
+                  setShowJobTailorModal(false)
+                  setJobTailorDescription('')
+                  setSelectedTextForTailor('')
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+                disabled={isTailoring}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Resume Section:</h3>
+                <div className="bg-gray-50 p-3 rounded border text-sm max-h-32 overflow-y-auto">
+                  {selectedTextForTailor}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="jobDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                  Job Description:
+                </label>
+                <textarea
+                  id="jobDescription"
+                  value={jobTailorDescription}
+                  onChange={(e) => setJobTailorDescription(e.target.value)}
+                  placeholder="Paste the job description here..."
+                  rows={8}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  disabled={isTailoring}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowJobTailorModal(false)
+                  setJobTailorDescription('')
+                  setSelectedTextForTailor('')
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isTailoring}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJobTailorSubmit}
+                disabled={isTailoring || !jobTailorDescription.trim()}
+                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isTailoring ? 'Tailoring...' : 'Tailor Resume'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CSS for highlighting */}
       <style jsx>{`
