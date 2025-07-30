@@ -45,8 +45,8 @@ export default function ViewJobPosts() {
       }
 
       setJobPosts(data || []);
-    } catch (err) {
-      console.error('Fetch error:', err);
+    } catch {
+      console.error('Fetch error occurred');
       setError('An error occurred while fetching job posts.');
     } finally {
       setLoading(false);
@@ -67,7 +67,7 @@ export default function ViewJobPosts() {
         return;
       }
       setJobPosts(prev => prev.filter(post => post.job_post_id !== job_post_id));
-    } catch (err) {
+    } catch {
       setError('An error occurred while deleting the job post.');
     }
   };

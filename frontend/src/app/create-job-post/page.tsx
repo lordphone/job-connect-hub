@@ -25,7 +25,7 @@ export default function CreateJobPost() {
     }
 
     // Insert into Supabase
-    const { data, error: supabaseError } = await supabase
+    const { error: supabaseError } = await supabase
       .from('job_posts')
       .insert([
         {
