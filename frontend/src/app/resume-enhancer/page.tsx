@@ -19,6 +19,8 @@ interface AnalysisResult {
   }
 }
 
+
+
 export default function ResumeEnhancer() {
   const [resumeTitle, setResumeTitle] = useState('AI Resume Enhancer')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -31,6 +33,7 @@ export default function ResumeEnhancer() {
   const [isClient, setIsClient] = useState(false)
   const [apiKeyError, setApiKeyError] = useState<string | null>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const aiEditorRef = useRef<any>(null)
   
   // Modal state for job tailor function
@@ -268,55 +271,58 @@ Return only the improved resume section, no additional explanations or formattin
       // Try multiple methods to replace the text
       let textReplaced = false
       
-      // Method 1: Try replaceSelectedText
-      if (typeof aiEditorRef.current.replaceSelectedText === 'function') {
-        try {
-          aiEditorRef.current.replaceSelectedText(tailoredContent)
-          textReplaced = true
-        } catch (err) {
-          // Continue to next method
+      // Try multiple methods to replace the text
+      if (aiEditorRef.current) {
+        // Method 1: Try replaceSelectedText
+        if (typeof aiEditorRef.current.replaceSelectedText === 'function') {
+          try {
+            aiEditorRef.current.replaceSelectedText(tailoredContent)
+            textReplaced = true
+          } catch {
+            // Continue to next method
+          }
         }
-      }
-      
-      // Method 2: Try insertText
-      if (!textReplaced && typeof aiEditorRef.current.insertText === 'function') {
-        try {
-          aiEditorRef.current.insertText(tailoredContent)
-          textReplaced = true
-        } catch (err) {
-          // Continue to next method
+        
+        // Method 2: Try insertText
+        if (!textReplaced && typeof aiEditorRef.current.insertText === 'function') {
+          try {
+            aiEditorRef.current.insertText(tailoredContent)
+            textReplaced = true
+          } catch {
+            // Continue to next method
+          }
         }
-      }
-      
-      // Method 3: Try using the editor's insert method
-      if (!textReplaced && typeof aiEditorRef.current.insert === 'function') {
-        try {
-          aiEditorRef.current.insert(tailoredContent)
-          textReplaced = true
-        } catch (err) {
-          // Continue to next method
+        
+        // Method 3: Try using the editor's insert method
+        if (!textReplaced && typeof aiEditorRef.current.insert === 'function') {
+          try {
+            aiEditorRef.current.insert(tailoredContent)
+            textReplaced = true
+          } catch {
+            // Continue to next method
+          }
         }
-      }
-      
-      // Method 4: Try executing a command
-      if (!textReplaced && typeof aiEditorRef.current.chain === 'function') {
-        try {
-          aiEditorRef.current.chain().focus().insertContent(tailoredContent).run()
-          textReplaced = true
-        } catch (err) {
-          // Continue to next method
+        
+        // Method 4: Try executing a command
+        if (!textReplaced && typeof aiEditorRef.current.chain === 'function') {
+          try {
+            aiEditorRef.current.chain()?.focus()?.insertContent(tailoredContent)?.run()
+            textReplaced = true
+          } catch {
+            // Continue to next method
+          }
         }
-      }
-      
-      // Method 5: Try setContent as last resort (replaces all content)
-      if (!textReplaced && typeof aiEditorRef.current.setContent === 'function') {
-        try {
-          const currentContent = aiEditorRef.current.getMarkdown() || aiEditorRef.current.getHtml() || ''
-          const newContent = currentContent.replace(selectedTextForTailor, tailoredContent)
-          aiEditorRef.current.setContent(newContent)
-          textReplaced = true
-        } catch (err) {
-          // Continue to fallback
+        
+        // Method 5: Try setContent as last resort (replaces all content)
+        if (!textReplaced && typeof aiEditorRef.current.setContent === 'function') {
+          try {
+            const currentContent = aiEditorRef.current.getMarkdown?.() || aiEditorRef.current.getHtml?.() || ''
+            const newContent = currentContent.replace(selectedTextForTailor, tailoredContent)
+            aiEditorRef.current.setContent(newContent)
+            textReplaced = true
+          } catch {
+            // Continue to fallback
+          }
         }
       }
       
@@ -409,13 +415,13 @@ Be thorough but concise. Include emojis in suggestions for better readability.`
         throw new Error('No analysis content received from OpenAI')
       }
 
-      let analysisData
-      try {
-        analysisData = JSON.parse(analysisContent)
-      } catch (parseError) {
-        console.error('Failed to parse AI response:', analysisContent)
-        throw new Error('Invalid response format from AI')
-      }
+             let analysisData
+       try {
+         analysisData = JSON.parse(analysisContent)
+       } catch {
+         console.error('Failed to parse AI response:', analysisContent)
+         throw new Error('Invalid response format from AI')
+       }
 
       // Generate revised resume using AI
       const revisedResume = await generateAIRevisedResume(resume, jobDesc, analysisData)
@@ -455,6 +461,7 @@ Be thorough but concise. Include emojis in suggestions for better readability.`
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generateAIRevisedResume = async (resume: string, jobDesc: string, analysisData: any): Promise<string> => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY
@@ -561,12 +568,12 @@ ${analysisData.missingSkills?.length > 0 ? `<li><strong>Missing Skills to Highli
           // Try getMarkdown first (preferred method according to docs)
           currentResumeContent = aiEditorRef.current.getMarkdown()
           console.log('Retrieved content from AiEditor (markdown):', currentResumeContent)
-        } catch (markdownError) {
+        } catch {
           try {
             // Fallback to getHtml if available
             currentResumeContent = aiEditorRef.current.getHtml()
             console.log('Retrieved content from AiEditor (html):', currentResumeContent)
-          } catch (htmlError) {
+          } catch {
             // Final fallback: try to get content from the editor element
             const editorElement = editorRef.current?.querySelector('[contenteditable="true"]')
             if (editorElement) {
