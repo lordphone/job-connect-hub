@@ -161,7 +161,7 @@ export default function ViewJobPosts() {
         {jobPosts.length === 0 ? (
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <h2 className="text-xl font-semibold text-gray-800 mb-2">No Job Posts Yet</h2>
-            <p className="text-gray-600 mb-4">You haven't created any job posts yet.</p>
+            <p className="text-gray-600 mb-4">You haven&apos;t created any job posts yet.</p>
             <button
               onClick={() => window.open('/create-job-post', '_self')}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"

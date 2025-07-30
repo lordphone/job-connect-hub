@@ -166,7 +166,7 @@ export default function CreateJobPost() {
                     rows={8}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Be detailed and specific about what you're looking for
+                    Be detailed and specific about what you&apos;re looking for
                   </p>
                 </div>
 
