@@ -243,3 +243,5 @@ dev.sh
 *.cert
 secrets.json
 .secrets/
+
+eslint.config.mts

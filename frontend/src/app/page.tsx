@@ -325,10 +325,10 @@ export default function Home() {
                   Create and optimize your resume with AI-powered suggestions and templates.
                 </p>
                 <button 
-                  onClick={() => window.open('/resume-builder', '_blank')}
+                  onClick={() => window.open('/resume-enhancer', '_blank')}
                   className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  Build Resume
+                  Build and Optimize Resume
                 </button>
               </div>
 
@@ -351,10 +351,7 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Revise and edit your resume with AI-powered suggestions to make it stand out to employers.
                 </p>
-                <button 
-                  onClick={() => window.open('/resume-enhancer', '_blank')}
-                  className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors"
-                >
+                <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors">
                   Improve Your Resume
                 </button>
               </div>
@@ -427,7 +424,10 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Create and publish new job postings to attract top talent.
                 </p>
-                <button className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors">
+                <button
+                  className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  onClick={() => window.open('/create-job-post', '_blank')}
+                >
                   Create Job Post
                 </button>
               </div>
@@ -439,7 +439,10 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   View, edit, and manage your existing job postings and their status.
                 </p>
-                <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                <button
+                  className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  onClick={() => window.open('/view-job-posts', '_blank')}
+                >
                   View Jobs
                 </button>
               </div>
