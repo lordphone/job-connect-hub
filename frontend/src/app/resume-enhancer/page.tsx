@@ -863,7 +863,7 @@ NEXT_PUBLIC_OPENAI_API_KEY=your_actual_api_key_here
                    ) : (
                      <div className="text-center py-8 text-gray-500">
                        <p className="mb-2">No job posts found</p>
-                       <p className="text-sm">Click "Load Recent Job Posts" to browse available positions</p>
+                       <p className="text-sm">Click &quot;Load Recent Job Posts&quot; to browse available positions</p>
                      </div>
                    )}
                  </div>
