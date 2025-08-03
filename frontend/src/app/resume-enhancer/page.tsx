@@ -1,7 +1,24 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import "aieditor/dist/style.css"
+import { supabase } from '@/lib/supabase'
+
+// Import AiEditor types and styles with error handling
+interface AiEditorInstance {
+  getContent?: () => string
+  getHtml?: () => string
+  getText?: () => string
+  getMarkdown?: () => string
+  getContentHtml?: () => string
+  getContentText?: () => string
+  destroy?: () => void
+}
+
+// Use dynamic import for AiEditor
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let AiEditor: any = null
+
+import 'aieditor/dist/style.css'
 import { OpenaiModelConfig } from 'aieditor'
 
 interface AnalysisResult {
@@ -19,7 +36,15 @@ interface AnalysisResult {
   }
 }
 
-
+interface JobPost {
+  job_post_id: string
+  job_title: string
+  job_description: string
+  job_salary: number
+  job_type: string
+  created_at: string
+  user_id: string
+}
 
 export default function ResumeEnhancer() {
   const [resumeTitle, setResumeTitle] = useState('AI Resume Enhancer')
@@ -41,6 +66,12 @@ export default function ResumeEnhancer() {
   const [jobTailorDescription, setJobTailorDescription] = useState('')
   const [selectedTextForTailor, setSelectedTextForTailor] = useState('')
   const [isTailoring, setIsTailoring] = useState(false)
+
+  // Job description tabs state
+  const [activeTab, setActiveTab] = useState<'paste' | 'browse'>('paste')
+  const [jobPosts, setJobPosts] = useState<JobPost[]>([])
+  const [loadingJobPosts, setLoadingJobPosts] = useState(false)
+  const [selectedJobPost, setSelectedJobPost] = useState<JobPost | null>(null)
 
   // Ensure we're on the client side before initializing AiEditor
   useEffect(() => {
@@ -231,7 +262,7 @@ Instructions:
 5. Ensure the content flows naturally and reads professionally
 6. Keep the same general structure but optimize the language for this job
 
-Return only the improved resume section, no additional explanations or formatting.`
+Return only the improved resume section, highlighting the changes and with no additional explanations or formatting.`
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -392,7 +423,7 @@ Be thorough but concise. Include emojis in suggestions for better readability.`
           messages: [
             {
               role: 'system',
-              content: 'You are an expert resume analyzer. Always respond with valid JSON only, no additional text.'
+              content: 'You are an expert resume analyzer. Respond ONLY with valid JSON. Do not include any markdown formatting, code blocks, or additional text. Return pure JSON that can be parsed directly.'
             },
             {
               role: 'user',
@@ -415,13 +446,40 @@ Be thorough but concise. Include emojis in suggestions for better readability.`
         throw new Error('No analysis content received from OpenAI')
       }
 
-             let analysisData
-       try {
-         analysisData = JSON.parse(analysisContent)
-       } catch {
-         console.error('Failed to parse AI response:', analysisContent)
-         throw new Error('Invalid response format from AI')
-       }
+      // Clean the response content to extract valid JSON
+      let cleanedContent = analysisContent.trim()
+      
+      // Remove any markdown code blocks if present
+      if (cleanedContent.startsWith('```json')) {
+        cleanedContent = cleanedContent.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanedContent.startsWith('```')) {
+        cleanedContent = cleanedContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      
+      // Try to find JSON object in the response
+      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        cleanedContent = jsonMatch[0]
+      }
+
+      let analysisData
+      try {
+        analysisData = JSON.parse(cleanedContent)
+        console.log('Successfully parsed AI response:', analysisData)
+      } catch (parseError) {
+        console.error('Failed to parse AI response. Original content:', analysisContent)
+        console.error('Cleaned content:', cleanedContent)
+        console.error('Parse error:', parseError)
+        
+        // Try to provide a more helpful error message
+        if (cleanedContent.includes('```')) {
+          throw new Error('AI response contains markdown formatting. Please try again.')
+        } else if (cleanedContent.length < 10) {
+          throw new Error('AI response is too short. Please try again.')
+        } else {
+          throw new Error(`Invalid JSON format from AI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`)
+        }
+      }
 
       // Generate revised resume using AI
       const revisedResume = await generateAIRevisedResume(resume, jobDesc, analysisData)
@@ -443,13 +501,27 @@ Be thorough but concise. Include emojis in suggestions for better readability.`
 
     } catch (error) {
       console.error('Error in AI analysis:', error)
+      
+      // Provide more specific error messages
+      let errorMessage = '❌ AI analysis failed. Please check your OpenAI API key configuration.'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('JSON')) {
+          errorMessage = '❌ AI response format error. Please try again with different content.'
+        } else if (error.message.includes('API')) {
+          errorMessage = '❌ API connection error. Please check your internet connection and API key.'
+        } else {
+          errorMessage = `❌ Analysis error: ${error.message}`
+        }
+      }
+      
       // Fallback to basic analysis if AI fails
       return {
         matchPercentage: 0,
         matchingSkills: [],
         jobSkills: [],
         missingSkills: [],
-        suggestions: ['❌ AI analysis failed. Please check your OpenAI API key configuration.'],
+        suggestions: [errorMessage],
         revisedResume: resume,
         resumeStats: {
           length: resume.length,
@@ -697,13 +769,120 @@ NEXT_PUBLIC_OPENAI_API_KEY=your_actual_api_key_here
             {/* Job Description Section */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Job Description</h3>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                placeholder="Paste the job description here..."
-                rows={8}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
+              <div className="flex border-b border-gray-200 mb-4">
+                <button
+                  onClick={() => {
+                    setActiveTab('paste')
+                    setSelectedJobPost(null)
+                  }}
+                  className={`py-2 px-4 font-medium text-gray-700 ${activeTab === 'paste' ? 'border-b-2 border-blue-500 text-blue-600' : ''}`}
+                >
+                  📝 Paste
+                </button>
+                <button
+                  onClick={() => setActiveTab('browse')}
+                  className={`py-2 px-4 font-medium text-gray-700 ${activeTab === 'browse' ? 'border-b-2 border-blue-500 text-blue-600' : ''}`}
+                >
+                  🔍 Browse
+                </button>
+              </div>
+
+              {activeTab === 'paste' && (
+                <textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder="Paste the job description here..."
+                  rows={8}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+              )}
+
+               {activeTab === 'browse' && (
+                 <div className="space-y-4">
+                   <div className="flex justify-between items-center">
+                     <button
+                       onClick={async () => {
+                         setLoadingJobPosts(true)
+                         const { data, error } = await supabase.from('job_posts').select('*').order('created_at', { ascending: false })
+                         if (error) {
+                           console.error('Error fetching job posts:', error)
+                           alert('Failed to load job posts.')
+                         } else {
+                           setJobPosts(data as JobPost[])
+                         }
+                         setLoadingJobPosts(false)
+                       }}
+                       disabled={loadingJobPosts}
+                       className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                     >
+                       {loadingJobPosts ? 'Loading...' : '📋 Load Recent Job Posts'}
+                     </button>
+                     {selectedJobPost && (
+                       <div className="text-right">
+                         <span className="text-sm text-green-600 font-medium block">
+                           ✅ {selectedJobPost.job_title} selected
+                         </span>
+                         <button
+                           onClick={() => {
+                             setSelectedJobPost(null)
+                             setJobDescription('')
+                           }}
+                           className="text-xs text-red-500 hover:text-red-700 mt-1"
+                         >
+                           Clear selection
+                         </button>
+                       </div>
+                     )}
+                   </div>
+                   
+                   {loadingJobPosts ? (
+                     <div className="text-center py-8">
+                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                       <p className="text-gray-600">Loading job posts...</p>
+                     </div>
+                   ) : jobPosts.length > 0 ? (
+                     <div className="space-y-3 max-h-96 overflow-y-auto">
+                       {jobPosts.map(post => (
+                         <div
+                           key={post.job_post_id}
+                           className={`p-4 rounded-lg cursor-pointer border transition-all ${
+                             selectedJobPost?.job_post_id === post.job_post_id
+                               ? 'bg-blue-50 border-blue-300 shadow-md'
+                               : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                           }`}
+                           onClick={() => {
+                             setSelectedJobPost(post)
+                             setJobDescription(post.job_description)
+                           }}
+                         >
+                           <div className="flex justify-between items-start mb-2">
+                             <h4 className="text-lg font-semibold text-gray-800">{post.job_title}</h4>
+                             {selectedJobPost?.job_post_id === post.job_post_id && (
+                               <span className="text-blue-600 text-sm font-medium">✓ Selected</span>
+                             )}
+                           </div>
+                           <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                             {post.job_description.length > 150 
+                               ? `${post.job_description.substring(0, 150)}...` 
+                               : post.job_description
+                             }
+                           </p>
+                           <div className="flex justify-between items-center text-xs text-gray-500">
+                             <span>💼 {post.job_type}</span>
+                             <span>💰 ${post.job_salary.toLocaleString()}</span>
+                             <span>📅 {new Date(post.created_at).toLocaleDateString()}</span>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   ) : (
+                     <div className="text-center py-8 text-gray-500">
+                       <p className="mb-2">No job posts found</p>
+                       <p className="text-sm">Click "Load Recent Job Posts" to browse available positions</p>
+                     </div>
+                   )}
+                 </div>
+               )}
             </div>
 
             {/* Analyze Button */}

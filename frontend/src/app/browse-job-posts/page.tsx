@@ -1,0 +1,182 @@
+"use client"
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+
+interface JobPost {
+  job_post_id: string;
+  job_title: string;
+  job_description: string;
+  job_salary: number;
+  job_type: string;
+  created_at: string;
+  user_id: string;
+}
+
+export default function BrowseJobPosts() {
+  const [jobPosts, setJobPosts] = useState<JobPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchJobPosts();
+  }, []);
+
+  const fetchJobPosts = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const { data, error: supabaseError } = await supabase
+        .from('job_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (supabaseError) {
+        setError('Failed to fetch job posts: ' + supabaseError.message);
+        return;
+      }
+      setJobPosts(data || []);
+    } catch {
+      setError('An error occurred while fetching job posts.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatSalary = (salary: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(salary);
+  };
+
+  const formatJobType = (jobType: string) => {
+    return jobType.charAt(0).toUpperCase() + jobType.slice(1).replace('-', ' ');
+  };
+
+  const toggleExpanded = (jobPostId: string) => {
+    setExpandedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobPostId)) {
+        newSet.delete(jobPostId);
+      } else {
+        newSet.add(jobPostId);
+      }
+      return newSet;
+    });
+  };
+
+  const truncateDescription = (description: string, maxLines: number = 3) => {
+    const lines = description.split('\n');
+    if (lines.length <= maxLines) return description;
+    const truncatedLines = lines.slice(0, maxLines);
+    return truncatedLines.join('\n') + '\n...';
+  };
+
+  const getDescriptionLineCount = (description: string) => {
+    return description.split('\n').length;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading job posts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => window.history.back()}
+                className="text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                ← Back
+              </button>
+              <div className="h-6 w-px bg-gray-300"></div>
+              <h1 className="text-2xl font-bold text-gray-800">All Job Posts</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {jobPosts.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">No Job Posts Available</h2>
+            <p className="text-gray-600 mb-4">There are currently no job posts to display.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {jobPosts.map((jobPost) => (
+              <div key={jobPost.job_post_id} className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{jobPost.job_title}</h3>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <span className="font-medium text-green-600">{formatSalary(jobPost.job_salary)}</span>
+                      </span>
+                      <span className="flex items-center">
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                          {formatJobType(jobPost.job_type)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {formatDate(jobPost.created_at)}
+                  </span>
+                </div>
+                <div className="text-gray-600 mb-4">
+                  <p className="whitespace-pre-wrap">
+                    {expandedPosts.has(jobPost.job_post_id) 
+                      ? jobPost.job_description 
+                      : truncateDescription(jobPost.job_description)
+                    }
+                  </p>
+                  {getDescriptionLineCount(jobPost.job_description) > 3 && (
+                    <button
+                      onClick={() => toggleExpanded(jobPost.job_post_id)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2"
+                    >
+                      {expandedPosts.has(jobPost.job_post_id) ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
+                {/* No action buttons for users */}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
