@@ -319,16 +319,16 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  Resume Builder
+                  AI Resume Builder
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  Create and optimize your resume with AI-powered suggestions and templates.
+                  Create, edit, and optimize your resume with advanced AI-powered features. Tailor your resume to specific job descriptions and get real-time suggestions.
                 </p>
                 <button 
-                  onClick={() => window.open('/resume-enhancer', '_blank')}
+                  onClick={() => window.open('/resume-builder', '_blank')}
                   className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  Build and Optimize Resume
+                  Build & Optimize Resume
                 </button>
               </div>
 
@@ -344,17 +344,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  AI Resume Enhancer
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Revise and edit your resume with AI-powered suggestions to make it stand out to employers.
-                </p>
-                <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors">
-                  Improve Your Resume
-                </button>
-              </div>
+
 
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">
