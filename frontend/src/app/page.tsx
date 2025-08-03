@@ -339,7 +339,10 @@ export default function Home() {
                 <p className="text-gray-600 mb-4">
                   Browse and search for job opportunities that match your skills and preferences.
                 </p>
-                <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                <button 
+                  onClick={() => window.open('/browse-job-posts', '_blank')}
+                  className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                >
                   Search Jobs
                 </button>
               </div>
