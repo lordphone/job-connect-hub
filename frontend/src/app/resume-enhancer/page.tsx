@@ -3,21 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 
-// Import AiEditor types and styles with error handling
-interface AiEditorInstance {
-  getContent?: () => string
-  getHtml?: () => string
-  getText?: () => string
-  getMarkdown?: () => string
-  getContentHtml?: () => string
-  getContentText?: () => string
-  destroy?: () => void
-}
-
-// Use dynamic import for AiEditor
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let AiEditor: any = null
-
 import 'aieditor/dist/style.css'
 import { OpenaiModelConfig } from 'aieditor'
 
@@ -95,7 +80,7 @@ export default function ResumeEnhancer() {
                 openai: {
                   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
                   model: "gpt-4o-mini"
-                }
+                } as OpenaiModelConfig
               },
               // Toolbar AI menus (appear when clicking AI button in toolbar)
               menus: [

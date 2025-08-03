@@ -6,8 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint . --config ../eslint.config.mts",
+    "lint:fix": "eslint . --fix --config ../eslint.config.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.52.0",
