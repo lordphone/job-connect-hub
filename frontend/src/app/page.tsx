@@ -444,7 +444,7 @@ export default function Home() {
                 </p>
                 <button
                   className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
-                  onClick={() => window.open('/view-job-posts', '_blank')}
+                  onClick={() => window.open('/manage-job-posts', '_blank')}
                 >
                   View Jobs
                 </button>
