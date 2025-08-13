@@ -1,0 +1,37 @@
+Users:
+--------------------------------------------------------------------
+Field          Type             Description
+--------------------------------------------------------------------
+id             int              user id, Primary key
+gid            int              group id(jobseeker, recruiter, admin, staff etc)
+lname          str              Last name
+fname          str              First name
+email          str              Unique email
+company        str              company name(for recruiter)
+created_at     timestamp        creation time
+updated_at     timestamp        Last update time
+
+Jobs:
+--------------------------------------------------------------------
+Field          Type             Description
+--------------------------------------------------------------------
+id             int              job id, Primary key
+gid            int              job group id (marketing/engineering/sales/business etc)
+title          str              Job title
+description    str              Full job description
+company        str              Company name
+location       str              City or remote
+salary_range   str              e.g., "$80k - $100k"
+created_at     timestamp        When job was posted
+updated_at     timestamp        Last updated
+
+Resumes:
+--------------------------------------------------------------------
+Field          Type            Description
+--------------------------------------------------------------------
+id            int              resume id, Primary key
+user_id       int              Owner of the resume
+file_url      str              Link to resume file
+created_at    timestamp        Upload date
+updated_at    timestamp        Last update
+
