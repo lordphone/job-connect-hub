@@ -316,7 +316,7 @@ export default function Home() {
           <div className="py-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-8">Job Seeker Dashboard</h2>
             
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">
                   Resume Builder
@@ -344,54 +344,6 @@ export default function Home() {
                   className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Search Jobs
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  AI Resume Enhancer
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Revise and edit your resume with AI-powered suggestions to make it stand out to employers.
-                </p>
-                <button className="w-full bg-purple-500 text-white py-2 rounded-lg hover:bg-purple-600 transition-colors">
-                  Improve Your Resume
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  Applications
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Track your job applications and manage your application pipeline.
-                </p>
-                <button className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors">
-                  View Applications
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  Profile
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Manage your profile, skills, and preferences to get better job matches.
-                </p>
-                <button className="w-full bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition-colors">
-                  Edit Profile
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                  Analytics
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  View insights about your job search progress and application performance.
-                </p>
-                <button className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                  View Analytics
                 </button>
               </div>
             </div>
